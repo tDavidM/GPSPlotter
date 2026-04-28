@@ -1,9 +1,10 @@
 
 
-//Sketch uses 26020 bytes (84%) of program storage space. Maximum is 30720 bytes.
-//Global variables use 1651 bytes (80%) of dynamic memory, leaving 397 bytes for local variables. Maximum is 2048 bytes.
+//Sketch uses 23114 bytes (75%) of program storage space. Maximum is 30720 bytes.
+//Global variables use 1317 bytes (64%) of dynamic memory, leaving 731 bytes for local variables. Maximum is 2048 bytes.
 
 //ToDo/Ideas
+//Handle when outside of the map
 //parse GPVTG messages ??? (maybe to heavy on processing, no real value in the additional data)
 //Alter Date based on Hour/Minute offset ??? (maybe to heavy on code, those 30Kb are precious)
 //Use 3 RefPoint to help with projection errors ????? (definitively too heavy on computations)
@@ -19,32 +20,39 @@
 //   when nothing is ready in the buffer, low priority computations are done using ComputeNewAngleDist
 // ToggleCursor runs every 500ms, control blinking of the cursor (but also turn the steps motors off after a moments when done moving)
 
-
-#include <Keypad.h>
-#include <arduino-timer.h>
+#include <avr/sleep.h>
 #include <EEPROM.h>
 #include "Const.h"
 
 //LCD segment display control pins
-const int LoadPin    = 13; // Pulled high then low when done sending data to the LCD shift register (Not connected, seems to work without)
-const int DataPin    = 3;  // Sends the current bit value for the LCD
-const int ClockPin   = 2;  // Register the bit value on the falling edge
-const int LCDBackPin = A0; // Alternatively pulled briefly high then back low to be later briefly low then back high,
+constexpr byte LoadPin    = 13; // Pulled high then low when done sending data to the LCD shift register (Not connected, seems to work without)
+constexpr byte DataPin    = 3;  // Sends the current bit value for the LCD
+constexpr byte ClockPin   = 2;  // Register the bit value on the falling edge
+constexpr byte LCDBackPin = A0; // Alternatively pulled briefly high then back low to be later briefly low then back high,
                            //   keeps the LCD backplane more or less correctly energized, should be improved but it's good enough
  
 //LEDs control pins
-const int LedPin       = A1; // Controls the red LED next to the LCD
-const int BackLightPin = 4;  // Controls the PNP transistor that turn On/Off the backligh (NOTE:pin high = backlight off)
+constexpr byte LedPin       = A1; // Controls the red LED next to the LCD
+constexpr byte BackLightPin = 4;  // Controls the PNP transistor that turn On/Off the backligh (NOTE:pin high = backlight off)
 
 //Stepper motors control pins
-const int DirXPin  = A2;      // Controls the direction of the X axis stepper motor
-const int StepXPin = A3;      // Move the X stepper motor by one full step every high/low cycle
-const int DirYPin  = A4;      // Controls the direction of the Y axis stepper motor
-const int StepYPin = A5;      // Move the Y stepper motor by one full step every high/low cycle
-const int StepEnablePin = A7; // Enables the 2 stepper motors when moving and put them back to sleep a short while after done moving (see ToggleCursor)
+constexpr byte DirXPin  = A2;      // Controls the direction of the X axis stepper motor
+constexpr byte StepXPin = A3;      // Move the X stepper motor by one full step every high/low cycle
+constexpr byte DirYPin  = A4;      // Controls the direction of the Y axis stepper motor
+constexpr byte StepYPin = A5;      // Move the Y stepper motor by one full step every high/low cycle
+constexpr byte StepEnablePin = A7; // Enables the 2 stepper motors when moving and put them back to sleep a short while after done moving (see ToggleCursor)
 
-// Timer used in setup()
-auto timer = timer_create_default();
+// Used to plan and execute task on a timer
+typedef byte (*Task_Handler)(void); // func signature
+constexpr byte TaskCount = 4;
+
+struct Task {
+  Task_Handler  Handler; //callback func
+  unsigned int  Delay;
+  unsigned int  LastRun; //ulong for longer than ~65 seconds
+} TaskList[TaskCount];
+
+struct Task* const TaskEnd = TaskList + TaskCount;
 
 // Keypad vars
 bool NewKeyPress = false; // Resetted by the fonction consuming the keypress
@@ -53,21 +61,34 @@ bool CurState    = false;  // Set by ToggleCursor() to control blinking of the c
 bool FastBlink   = false;
 
 // Keypad size
-const int ROW_NUM = 4;    //4 rows
-const int COLUMN_NUM = 4; //4 columns
+constexpr byte ROW_NUM    = 4;  //4 rows
+constexpr byte COLUMN_NUM = 4;  //4 columns
+constexpr byte LIST_MAX   = 3;  // Max number of keys on the active list.
 
 // Matrix of keys on the keypad, used to set the global variable char KeyPressVal by ReadKeypad()
-char AvailableKeys[ROW_NUM][COLUMN_NUM] = {
-  {'1','2','3', 'R'},
-  {'4','5','6', 'P'},
-  {'7','8','9', 'H'},
-  {'C','0','E', 'i'}
+char KeypadLayout[ROW_NUM][COLUMN_NUM] = {
+  {KEY_1,     KEY_2,  KEY_3,     KEY_REFPOINT},
+  {KEY_4,     KEY_5,  KEY_6,     KEY_POSITION},
+  {KEY_7,     KEY_8,  KEY_9,     KEY_HEADING },
+  {KEY_CLEAR, KEY_0,  KEY_ENTER, KEY_ILUM    }
 };
 
 // Set the pinout for the keypad
-byte pin_rows[ROW_NUM] = {5, 6, 7, 8};
-byte pin_column[COLUMN_NUM] = {9, 10, 11, 12};
-Keypad keypad = Keypad( makeKeymap(AvailableKeys), pin_rows, pin_column, ROW_NUM, COLUMN_NUM );
+byte PinRows[ROW_NUM] = {5, 6, 7, 8};
+byte PinColumn[COLUMN_NUM] = {9, 10, 11, 12};
+
+struct Key {
+  byte Code;
+  char Val;
+  bool StateChanged;
+  KeyStates State;
+  //unsigned int HoldTimer;
+};
+
+byte KeyBitMap[ROW_NUM];
+Key  KeysPressed[LIST_MAX];
+unsigned int KeyHoldTimer;
+unsigned int KeyHoldDelay = 500;
 
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
@@ -83,7 +104,7 @@ struct ElemStruct {
 // Structure for storing state for the interface
 struct StateStruct {
   // Interface mode
-  char CurrentMode = 'H';  //(A)RefPointA, (B)RefPointB, (P)Position, (H)Heading, (D)Destination, (M)Map/Grid/Pointer
+  DisplayModes CurrentMode = M_HEADING;  //(A)RefPointA, (B)RefPointB, (P)Position, (H)Heading, (D)Destination, (M)Map/Grid/Pointer
 
   // In each mode, control the sub-mode (displayed value)
   bool ShowDist = false, ShowLat = true, ShowLon = false; // Generic sub-modes
@@ -107,12 +128,12 @@ struct StateStruct {
   byte CurrentWaypoint=0; 
 
   // Used in Inputing, Editing, Updating modes
-  char IndQuadrant = ' ';           // In Editing, the current N/S or E/W value
+  Quadrants IndQuadrant = Q_NONE;   // In Editing, the current N/S or E/W value
   char InputBuffer[10];             // In Inputing, keeps the full value displayed and modified by keypress
   byte InputPos = 0, InputMax = 8;  // In Inputing, manage the current cursor position and max cursor position
   int  CursorX, CursorY = 0;        // In Updating, keeps the current X or Y value
   bool IndDirX    = true;           // In Updating, if the X or Y value is displayed
-  byte CursorStep = 75;             // In Updating, how many steps per arrow keypress
+  byte CursorStep = STEP_Cursor;    // In Updating, how many steps per arrow keypress
 };
 
 // Only one instance
@@ -122,7 +143,7 @@ StateStruct MainState;
 struct NavData {
   long Lat=0, Lon=0;           // Latitude/Longitude in absolute values without decimal
                                //   where, for exemple, -45.123 is stored as 4512300 (conversion factor of x100000)
-  long Dist=0;                // Distance in meters
+  long Dist=0;                 // Distance in meters
   bool NInd=true, EInd=false;  // North/South and East/West indicator for Latitude/Longitude
   int  X=0, Y=0;               // Number of steps away from the top left corner of the plotter (always positive)
   byte Angle=255;              // Direction in "ThirtyTwoTh" of a degre (0=N, 8=E, 16=S, 24=W, 255=none) 
@@ -168,7 +189,7 @@ StepMotorStruct StepMotorVal;
 bool BackLightState = false;
 
 // Buffer used for serial GPS data recv
-const int BufferSize = 90;  
+constexpr byte BufferSize = 90;  
 char RecvBuff[BufferSize];   // Stores the data being activly received from Serial
 char GPGGABuff[BufferSize];  // Stores the last GPGGA message received
 char GPRMCBuff[BufferSize];  // Stores the last GPRMC message received
@@ -216,7 +237,7 @@ void setup() {
   TestVal = EEPROM.read(EEPROM_ControlVal);
   if( TestVal == EEPROM_MagicValue ) {
     ReadEEPROM(NULL);
-    ComputeNewXY('P');
+    ComputeNewXY(M_POSITION);
   }
 
   delay(500);
@@ -228,10 +249,18 @@ void setup() {
   HeadingRefresh(NULL);
   RefreshLCD(NULL);
 
-  timer.every(25,  ReadKeypad);       // Reads keypress and update the stepper motor in small increments
-  timer.every(100, UpdateDisplay);    // Takes the LCD bit buffer and pushs it to the display
-  timer.every(125, GetSerialGPS);     // Keep NavData up to date by listening on Serial and computing angle, distance and scaling factor when idle
-  timer.every(500, ToggleCursor);     // Controls blinking of the cursor, LED and make sure the display state is up to date
+  //Keyboard initialisation
+  memset(KeysPressed, 0, sizeof(KeysPressed)); 
+  for (byte i=0; i<LIST_MAX; i++)
+    KeysPressed[i].Code = NOT_FOUND;
+  for (byte i=0; i<ROW_NUM; i++)
+    pinMode(PinRows[i], INPUT_PULLUP);
+
+  memset(TaskList, 0, sizeof(TaskList));
+  SetTask(0, 25,  ReadKeypad);       // Reads keypress and update the stepper motor in small increments
+  SetTask(1, 100, UpdateDisplay);    // Takes the LCD bit buffer and pushs it to the display
+  SetTask(2, 125, GetSerialGPS);     // Keep NavData up to date by listening on Serial and computing angle, distance and scaling factor when idle
+  SetTask(3, 500, ToggleCursor);     // Controls blinking of the cursor, LED and make sure the display state is up to date
 }
 
 //     #####     #####     #####     #####     #####
@@ -242,7 +271,14 @@ void loop() {
 
   ReadSerial(NULL);
 
-  timer.tick();
+  unsigned int WaitTime = HandleTask();
+
+  if (WaitTime > 0) {
+    set_sleep_mode(SLEEP_MODE_IDLE);
+    sleep_enable();
+    sleep_cpu();
+    sleep_disable();
+  }
 }
 
 //     #####     #####     #####     #####     #####
@@ -261,7 +297,7 @@ bool UpdateDisplay(void *) {
   
   //Toggle the value at the current cursor position with _ every half second
   Blinking(NULL);
-  //Force the inner ring on the dearing indicator on
+  //Force the inner ring/bearing indicator on
   ToggleRing(true, false); 
   //push the buffer to the LCD display
   RefreshLCD(NULL);
@@ -280,11 +316,11 @@ bool UpdateDisplay(void *) {
 // Runs every 25ms, scan the KeyPad matrix for any new keypress
 bool ReadKeypad(void *) {
   
-  // Register a keypres
-  char KeyPress = keypad.getKey();
-  if (KeyPress){
+  // Register a keypress
+  char KeyPress = GetCurrKey();
+  if (KeyPress) {
 
-    if(KeyPress == 'i') {
+    if(KeyPress == KEY_ILUM) {
       // Turning the backlight is done (this one is not "raised" )
       digitalWrite(BackLightPin, BackLightState);
       BackLightState = !BackLightState;
@@ -346,7 +382,6 @@ bool ReadSerial(void *) {
     }
     MaxIter--;
   }
-
 }
 
 //     #####     #####     #####     #####     #####
@@ -358,15 +393,15 @@ bool GetSerialGPS(void *) {
 
   // If any of the buffers are ready for processing
   if (GPGGAAvailable) {
-    ProcessNMEAData(GPGGABuff, MsgTypeGPGGA);
+    ProcessNMEAData(GPGGABuff, MSG_GPGGA);
     GPGGAAvailable = false;
 
   } else if(GPRMCAvailable) {
-    ProcessNMEAData(GPRMCBuff, MsgTypeGPRMC);
+    ProcessNMEAData(GPRMCBuff, MSG_GPRMC);
     GPRMCAvailable = false;
 
   } //else if(GPVTGAvailable) {
-    //ProcessNMEAData(GPVTGBuff, MsgTypeGPVTG);
+    //ProcessNMEAData(GPVTGBuff, MSG_GPVTG);
     //GPVTGAvailable = false;
   //}
   else {

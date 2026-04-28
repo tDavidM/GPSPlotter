@@ -12,6 +12,11 @@
 // SaveValue saves the inputed/edited lat or lon value and indicator to the appropriate NAvData after inputing and editing is done
 // Updating handles keypress when the XY plotter position is changed 
 
+//     #####     #####     #####     #####     #####
+//     #####     #####     #####     #####     #####
+//     #####     #####     #####     #####     #####
+
+// Toggle the value at the current cursor position with _ every half second
 void Blinking(void *) { 
   // If Inputing, blink the SET segment and the cursor at the correct position
   if(MainState.Inputing > 0) {
@@ -32,21 +37,21 @@ void Blinking(void *) {
   } else if(MainState.Editing) {
     ToggleInd(LCDIndSet, CurState);
     if(CurState) {
-      ClearBoxCross(NULL);
+      ClearBoxStar(NULL);
       ToggleBox(Box_Bar);
     } else {
-      if(MainState.IndQuadrant == 'N') {
+      if(MainState.IndQuadrant == Q_NORTH) {
         ToggleBox(Box_N);
-        ToggleCross(Cross_N);
-      } else if(MainState.IndQuadrant == 'S'){
+        ToggleStar(Star_N);
+      } else if(MainState.IndQuadrant == Q_SOUTH){
         ToggleBox(Box_S);
-        ToggleCross(Cross_S);
-      } else if(MainState.IndQuadrant == 'E'){
+        ToggleStar(Star_S);
+      } else if(MainState.IndQuadrant == Q_EAST){
         ToggleBox(Box_E); 
-        ToggleCross(Cross_E);
-      } else if(MainState.IndQuadrant == 'W'){
+        ToggleStar(Star_E);
+      } else if(MainState.IndQuadrant == Q_WEST){
         ToggleBox(Box_W);
-        ToggleCross(Cross_W);  
+        ToggleStar(Star_W);  
       }
     } 
   // If Updating, blink the UPDATE segment
@@ -61,17 +66,17 @@ void Blinking(void *) {
     ToggleInd(LCDPlusHi,    true);
     ToggleInd(LCDIndUpdate, CurState);
   // Otherwise, just refresh the display
-  }/* else if(MainState.CurrentMode == 'H')
+  }/* else if(MainState.CurrentMode == M_HEADING)
     HeadingRefresh(NULL);
-  else if(MainState.CurrentMode == 'M')
+  else if(MainState.CurrentMode == M_MAP)
     GenericRefresh(&NavValue.Pointer, LCDIndGrid);
-  else if(MainState.CurrentMode == 'D')
+  else if(MainState.CurrentMode == M_DESTINATION)
     GenericRefresh(&NavValue.Destination, LCDIndDest);
-  else if(MainState.CurrentMode == 'P')
+  else if(MainState.CurrentMode == M_POSITION)
     GenericRefresh(NavValue.Position, LCDIndPosition);
-  else if(MainState.CurrentMode == 'A')
+  else if(MainState.CurrentMode == M_REFPOINTA)
     GenericRefresh(&NavValue.RefPointA, LCDIndRefPoint);
-  else if(MainState.CurrentMode == 'B')
+  else if(MainState.CurrentMode == M_REFPOINTB)
     GenericRefresh(&NavValue.RefPointB, LCDIndRefPoint);*/
 
   // If no reference point set (slow LED blink)
@@ -108,80 +113,81 @@ void Blinking(void *) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
-void MainInterface(char Key) {
+// Entry point for everything related to the interface and keypress processing
+void MainInterface(KeypadKeys* Key) {
   //Translate Key if not Inputing 
   if(MainState.Inputing == 0) {
-    switch(Key) { 
-      case  '1':  Key='S';  break; //Select
-      case  '2':  Key='A';  break; //Above (Up)
-      case  '3':  Key='M';  break; //Map
-      case  '4':  Key='B';  break; //Back (Left)
-      case  '5':  Key='U';  break; //Update
-      case  '6':  Key='F';  break; //Forward (Right)
-      case  '7':  Key='D';  break; //Dest
-      case  '8':  Key='L';  break; //Lower (Down)
-      case  '9':  Key='Z';  break; //-_- (Precision)
-      case  '0':  Key='I';  break; //Input
+    switch(*Key) { 
+      case  KEY_1:  *Key=KEY_SELECT; break;
+      case  KEY_2:  *Key=KEY_UP;     break;
+      case  KEY_3:  *Key=KEY_MAP;    break;
+      case  KEY_4:  *Key=KEY_LEFT;   break;
+      case  KEY_5:  *Key=KEY_UPDATE; break;
+      case  KEY_6:  *Key=KEY_RIGHT;  break;
+      case  KEY_7:  *Key=KEY_DEST;   break;
+      case  KEY_8:  *Key=KEY_DOWN;   break;
+      case  KEY_9:  *Key=KEY_PRECIS; break;
+      case  KEY_0:  *Key=KEY_INPUT;  break;
     }
   } else {
     //Inputing is when numbers are typed
-    Inputing(&Key);
+    Inputing(Key);
   }
 
   if(MainState.Editing) {
     //Editing comes after editing, it's for sign or N/S - E/W ind
-    Editing(&Key);
+    Editing(Key);
   }
 
   if(MainState.Updating) {
     //When the arrow keys are used to change the cursor position
-    Updating(&Key);
+    Updating(Key);
   }
  
-  if(Key == 'H') {
-    MainState.CurrentMode = 'H';
+  if(*Key == KEY_HEADING) {
+    MainState.CurrentMode = M_HEADING;
     SetInterface(NULL);
     HeadingRefresh(NULL);
-  } else if(Key == 'M' || (Key == 'C' && MainState.CurrentMode == 'M')) {
-    MainState.CurrentMode = 'M';
+  } else if(*Key == KEY_MAP || (*Key == KEY_CLEAR && MainState.CurrentMode == M_MAP)) {
+    MainState.CurrentMode = M_MAP;
     SetInterface(NULL);
     GenericRefresh(&NavValue.Pointer, LCDIndGrid);
-  } else if(Key == 'D' || (Key == 'C' && MainState.CurrentMode == 'D')) {
-    MainState.CurrentMode = 'D';
+  } else if(*Key == KEY_DEST || (*Key == KEY_CLEAR && MainState.CurrentMode == M_DESTINATION)) {
+    MainState.CurrentMode = M_DESTINATION;
     SetInterface(NULL);
     GenericRefresh(&NavValue.Destination, LCDIndDest);
-  } else if(Key == 'P' || (Key == 'C' && MainState.CurrentMode == 'P')) {
-    MainState.CurrentMode = 'P';
+  } else if(*Key == KEY_POSITION || (*Key == KEY_CLEAR && MainState.CurrentMode == M_POSITION)) {
+    MainState.CurrentMode = M_POSITION;
     SetInterface(NULL);
     GenericRefresh(NavValue.Position, LCDIndPosition);
-  } else if(Key == 'R' || (Key == 'C' && (MainState.CurrentMode == 'A' || MainState.CurrentMode == 'B'))) {
-    if( MainState.CurrentMode == 'A' && Key == 'R' )
-      MainState.CurrentMode = 'B';
+  } else if(*Key == KEY_REFPOINT || (*Key == KEY_CLEAR && (MainState.CurrentMode == M_REFPOINTA || MainState.CurrentMode == M_REFPOINTB))) {
+    if( MainState.CurrentMode == M_REFPOINTA && *Key == KEY_REFPOINT )
+      MainState.CurrentMode = M_REFPOINTB;
     else
-      MainState.CurrentMode = 'A';
+      MainState.CurrentMode = M_REFPOINTA;
     SetInterface(NULL);  
 
-    if( MainState.CurrentMode == 'A' )
+    if( MainState.CurrentMode == M_REFPOINTA )
       GenericRefresh(&NavValue.RefPointA, LCDIndRefPoint);
     else
       GenericRefresh(&NavValue.RefPointB, LCDIndRefPoint);
   }
 
-  if(MainState.CurrentMode == 'H')
+  if(MainState.CurrentMode == M_HEADING)
     HeadingInterface(Key);
-  else if(MainState.CurrentMode == 'D')
+  else if(MainState.CurrentMode == M_DESTINATION)
     GenericInterface(Key, &NavValue.Destination);
-  else if(MainState.CurrentMode == 'M')
+  else if(MainState.CurrentMode == M_MAP)
     GenericInterface(Key, &NavValue.Pointer);
-  else if(MainState.CurrentMode == 'P')
+  else if(MainState.CurrentMode == M_POSITION)
     GenericInterface(Key, NavValue.Position);
-  else if(MainState.CurrentMode == 'A')
+  else if(MainState.CurrentMode == M_REFPOINTA)
     GenericInterface(Key, &NavValue.RefPointA);
-  else if(MainState.CurrentMode == 'B')
+  else if(MainState.CurrentMode == M_REFPOINTB)
     GenericInterface(Key, &NavValue.RefPointB);
   else {
     ToggleInd(LCDIndFault, true);
-    //MainState.CurrentMode = 'H';
+    //MainState.CurrentMode = M_HEADING;
   }
 
 };
@@ -190,11 +196,12 @@ void MainInterface(char Key) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
-void GenericInterface(char* Key, NavData *Data) {
+// Handle the Map, Dest, RefPoint and Position modes keypress
+void GenericInterface(KeypadKeys* Key, NavData *Data) {
   MainState.Resetting    = 0;
   MainState.Recalibrate = 0;
 
-  if(Key == 'S') {
+  if(*Key == KEY_SELECT) {
     //Switch to next state 
     if(MainState.ShowDist) {
       MainState.ShowDist = false;
@@ -209,8 +216,8 @@ void GenericInterface(char* Key, NavData *Data) {
       MainState.ShowPrecision = false;
     }
 
-  } else if(Key == 'E') {
-    if(MainState.CurrentMode != 'P') {
+  } else if(*Key == KEY_ENTER) {
+    if(MainState.CurrentMode != M_POSITION) {
       MainState.Updating = true;
       MainState.CursorStep = STEP_SizeCorse;
       MainState.CursorX = Data->X;
@@ -220,40 +227,40 @@ void GenericInterface(char* Key, NavData *Data) {
 
       ShowInt(LCDRowHi, MainState.CursorX, 1); 
       ShowText(LCDRowLow, Corse_Msg);
-      ClearBoxCross(NULL);
-      ToggleCross(Cross_X);
+      ClearBoxStar(NULL);
+      ToggleStar(Star_X);
     } else {
       SavePosition(NULL);
     }
 
-  } else if(Key == 'Z' && ( MainState.ShowLat || MainState.ShowLon ) ) {
+  } else if(*Key == KEY_PRECIS && ( MainState.ShowLat || MainState.ShowLon ) ) {
     MainState.ShowPrecision = !MainState.ShowPrecision;
 
-  } else if(Key == 'U' && MainState.CursorValid) {
+  } else if(*Key == KEY_UPDATE && MainState.CursorValid) {
     GoToXY(Data->X, Data->Y);
 
-  } else if(Key == 'C' ) {
+  } else if(*Key == KEY_CLEAR ) {
     if( MainState.MovingCur )
       GoToXY(StepMotorVal.CurrentX, StepMotorVal.CurrentY);
     else if( MainState.ShowPrecision )
       MainState.ShowPrecision = false;
-    else if(MainState.CurrentMode == 'P')
+    else if(MainState.CurrentMode == M_POSITION)
       ClearPosition(NULL);
 
-  } else if(Key == 'I'  ) {
-    if(MainState.CurrentMode != 'P' && ( MainState.ShowLat || MainState.ShowLon )) {
+  } else if(*Key == KEY_INPUT ) {
+    if(MainState.CurrentMode != M_POSITION && ( MainState.ShowLat || MainState.ShowLon )) {
       MainState.Inputing = 1;
       MainState.Editing  = true;
       MainState.InputMax = 7;
       if(MainState.ShowLat) {
         //ShowText(LCDRowHi, " 000000");  
         MainState.InputPos = 1;
-        /*if(MainState.CurrentMode == 'B' && MainState.CurrentValid) {
-          NavValue.Current.NInd ? MainState.IndQuadrant = 'N' : MainState.IndQuadrant = 'S';
+        /*if(MainState.CurrentMode == M_REFPOINTB && MainState.CurrentValid) {
+          NavValue.Current.NInd ? MainState.IndQuadrant = Q_NORTH : MainState.IndQuadrant = Q_SOUTH;
           SetInputBuf(NavValue.Current.Lat, false);
           DisplayLat(NavValue.Current.Lat, NavValue.Current.NInd, true);
         } else {*/
-          Data->NInd ? MainState.IndQuadrant = 'N' : MainState.IndQuadrant = 'S';
+          Data->NInd ? MainState.IndQuadrant = Q_NORTH : MainState.IndQuadrant = Q_SOUTH;
           SetInputBuf(Data->Lat, false);
           DisplayLat(Data->Lat, Data->NInd, true);
         //}
@@ -262,18 +269,18 @@ void GenericInterface(char* Key, NavData *Data) {
       } else {
         //ShowText(LCDRowHi, "0000000");
         MainState.InputPos = 0;
-        /*if(MainState.CurrentMode == 'B' && MainState.CurrentValid) {
-          NavValue.Current.EInd ? MainState.IndQuadrant = 'E' : MainState.IndQuadrant = 'W';
+        /*if(MainState.CurrentMode == M_REFPOINTB && MainState.CurrentValid) {
+          NavValue.Current.EInd ? MainState.IndQuadrant = Q_EAST : MainState.IndQuadrant = Q_WEST;
           SetInputBuf(NavValue.Current.Lon, true);
           DisplayLon(NavValue.Current.Lon, NavValue.Current.EInd, true);
         } else {*/
-          Data->EInd ? MainState.IndQuadrant = 'E' : MainState.IndQuadrant = 'W';
+          Data->EInd ? MainState.IndQuadrant = Q_EAST : MainState.IndQuadrant = Q_WEST;
           SetInputBuf(Data->Lon, true);
           DisplayLon(Data->Lon, Data->EInd, true);
         //}
         ShowText(LCDRowLow, Lon_Msg);
       }
-    } else if(MainState.CurrentMode == 'P')  {
+    } else if(MainState.CurrentMode == M_POSITION)  {
       MainState.Inputing = 1;
       MainState.Editing  = false;
       MainState.InputMax = 0;
@@ -283,13 +290,13 @@ void GenericInterface(char* Key, NavData *Data) {
       ToggleNumberVal(LCDRowHi, 0, MainState.CurrentWaypoint);
       ShowText(LCDRowLow, Point_Msg);  
 
-      ClearBoxCross(NULL);
+      ClearBoxStar(NULL);
     }
-  } else if(Key == 'V') { //Back from inputing
+  } else if(*Key == KEY_BACK) { //Back from inputing
       MainState.InputPos = 0;
       MainState.CurrentWaypoint = MainState.InputBuffer[0] - '0';
       NavValue.Position = &NavValue.Waypoints[MainState.CurrentWaypoint];
-      ComputeNewXY('P');
+      ComputeNewXY(M_POSITION);
   }
 }
 
@@ -297,11 +304,12 @@ void GenericInterface(char* Key, NavData *Data) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
-void HeadingInterface(char* Key) {
+// Handle the Heading mode keypress
+void HeadingInterface(KeypadKeys* Key) {
   char LocalBuffer[3];
   byte HourOffsetDigit;
 
-  if(Key == 'S') {
+  if(*Key == KEY_SELECT) {
     //Switch to next state 
     if( MainState.Resetting > 0 ) {
       if( MainState.Resetting == 1 )
@@ -331,7 +339,7 @@ void HeadingInterface(char* Key) {
     }
     MainState.Recalibrate = 0;
 
-  } else if(Key == 'Z') {
+  } else if(*Key == KEY_PRECIS) {
     if( MainState.ShowLat || MainState.ShowLon ) {
       MainState.ShowPrecision = !MainState.ShowPrecision;
     } else if( MainState.Recalibrate == 4 ) {
@@ -340,12 +348,12 @@ void HeadingInterface(char* Key) {
     } else {
       MainState.Recalibrate++;
     }
-  } else if(Key == 'U' && MainState.CursorValid) {
+  } else if(*Key == KEY_UPDATE && MainState.CursorValid) {
     GoToXY(NavValue.Current.X, NavValue.Current.Y);
     MainState.Resetting    = 0;
     MainState.Recalibrate = 0;
 
-  }  else if(Key == 'I' /*&& MainState.ShowDate*/ ) {
+  } else if(*Key == KEY_INPUT /*&& MainState.ShowDate*/ ) {
     MainState.Resetting    = 0;
     MainState.Recalibrate = 0;
     MainState.Inputing = 1;
@@ -372,8 +380,8 @@ void HeadingInterface(char* Key) {
     NavValue.MinuteOffset>9 ? ShowInt(LCDRowHi, NavValue.MinuteOffset, 4) : ShowInt(LCDRowHi, NavValue.MinuteOffset, 5);
     
     ShowText(LCDRowLow, Offset_Msg);  
-    ClearBoxCross(NULL);
-  } else if(Key == 'V') { //Back from inputing
+    ClearBoxStar(NULL);
+  } else if(*Key == KEY_BACK) { //Back from inputing
     //MainState.InputBuffer[6] = 0x00;
     MainState.InputPos = 0;
     
@@ -386,7 +394,7 @@ void HeadingInterface(char* Key) {
     LocalBuffer[1] = MainState.InputBuffer[5];
     NavValue.MinuteOffset = atoi(LocalBuffer);
 
-  } else if(Key == 'E') {
+  } else if(*Key == KEY_ENTER) {
     MainState.Recalibrate = 0;
     if( MainState.Resetting == 0 ){
       MainState.Resetting = 1;
@@ -398,7 +406,7 @@ void HeadingInterface(char* Key) {
     } else{
       MainState.Resetting = 0;
     }
-  } else if(Key == 'C') {
+  } else if(*Key == KEY_CLEAR) {
     MainState.Resetting    = 0;
     MainState.Recalibrate = 0;
     if( StepMotorVal.Calibrating ) {
@@ -414,8 +422,9 @@ void HeadingInterface(char* Key) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+// Handle displaying when in Heading mode
 void HeadingRefresh(void *) {
-  ClearBoxCross(NULL);
+  ClearBoxStar(NULL);
   ClearAllInd(NULL);
   ClearRing(NULL);
 
@@ -438,7 +447,7 @@ void HeadingRefresh(void *) {
       ToggleInd(LCDIndAlt,  true); 
       DisplayDist(NavValue.Altitude);
     } else if(MainState.ShowSpeed) {
-      ToggleCross(Cross_K);
+      ToggleStar(Star_K);
       ToggleNumberVal(LCDRowHi, 0, 'n');
       ToggleNumberVal(LCDRowHi, 1, 'h');
       ToggleNumberVal(LCDRowHi, 2, ' ');
@@ -462,17 +471,18 @@ void HeadingRefresh(void *) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+// Handle displaying when in Map, Dist, RefPoint or Position modes
 void GenericRefresh(NavData *Data, byte Ind) {
-  ClearBoxCross(NULL);
+  ClearBoxStar(NULL);
   ClearAllInd(NULL);  
   ToggleInd(Ind, true);
 
   DisplayTime(NULL);
-  if(MainState.CurrentMode == 'A')
+  if(MainState.CurrentMode == M_REFPOINTA)
     ToggleNumberVal(LCDRowLow, 0, '1'); // 'A'
-  else if (MainState.CurrentMode == 'B')
+  else if (MainState.CurrentMode == M_REFPOINTB)
     ToggleNumberVal(LCDRowLow, 0, '2'); // 'b'
-  else if (MainState.CurrentMode == 'P')
+  else if (MainState.CurrentMode == M_POSITION)
     ToggleNumberVal(LCDRowLow, 0,  MainState.CurrentWaypoint + '0'); // 0-9
 
   ClearRing(NULL);
@@ -491,15 +501,16 @@ void GenericRefresh(NavData *Data, byte Ind) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
-void Inputing(char Key[]) {
-  if (*Key=='E') {
+// Handle keypress when a numerical value is being inputed regardless of the underlying mode (used for Lat/Lon/X/Y/Offset values)
+void Inputing(KeypadKeys* Key) {
+  if (*Key==KEY_ENTER) {
     MainState.Inputing--;
     if(MainState.InputPos < 7)
       ToggleNumberVal(LCDRowHi, MainState.InputPos, MainState.InputBuffer[MainState.InputPos]);
-    *Key = 'V';
+    *Key = KEY_BACK;
   //Pressing R, P or H while editing will cancel
-  } else if( *Key=='C' || *Key == 'H' || *Key == 'P' || *Key == 'R') {
-    *Key=='C' ? MainState.Inputing-- : MainState.Inputing = 0;
+  } else if( *Key==KEY_CLEAR || *Key == KEY_HEADING || *Key == KEY_POSITION || *Key == KEY_REFPOINT) {
+    *Key==KEY_CLEAR ? MainState.Inputing-- : MainState.Inputing = 0;
     MainState.Editing  = false;
     MainState.InputPos = 0;
   } else if(MainState.InputPos <= MainState.InputMax) {
@@ -516,35 +527,36 @@ void Inputing(char Key[]) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
-void Editing(char Key[]) {
-  if (*Key=='E') {
+// Handle keypress for setting the N/S or E/W indicator after a Lat or Lon value has been inputed (not used for X/Y/Offset values)
+void Editing(KeypadKeys* Key) {
+  if (*Key==KEY_ENTER) {
     SaveValue(NULL);
     MainState.Editing = false;
     MainState.InputPos = 0;
-    *Key = ' ';
+    *Key = KEY_NONE;
   //Pressing R, P or H while editing will cancel
-  } else if( *Key=='C' || *Key == 'H' || *Key == 'M' || *Key == 'D' || *Key == 'P' || *Key == 'R' ) {
+  } else if( *Key==KEY_CLEAR || *Key == KEY_HEADING || *Key == KEY_MAP || *Key == KEY_DEST || *Key == KEY_POSITION || *Key == KEY_REFPOINT ) {
     MainState.Editing  = false;
     MainState.InputPos = 0;
-  } else if(*Key=='S') {
-    if(MainState.IndQuadrant == 'N') {
-      MainState.IndQuadrant = 'S';
+  } else if(*Key==KEY_SELECT) {
+    if(MainState.IndQuadrant == Q_NORTH) {
+      MainState.IndQuadrant = Q_SOUTH;
       ToggleBox(Box_S);
-      ToggleCross(Cross_S);
-    } else if(MainState.IndQuadrant == 'S'){
-      MainState.IndQuadrant = 'N';
+      ToggleStar(Star_S);
+    } else if(MainState.IndQuadrant == Q_SOUTH){
+      MainState.IndQuadrant = Q_NORTH;
       ToggleBox(Box_N);
-      ToggleCross(Cross_N);
-    } else if(MainState.IndQuadrant == 'E'){
-      MainState.IndQuadrant = 'W';
+      ToggleStar(Star_N);
+    } else if(MainState.IndQuadrant == Q_EAST){
+      MainState.IndQuadrant = Q_WEST;
       ToggleBox(Box_W); 
-      ToggleCross(Cross_W);
-    } else if(MainState.IndQuadrant == 'W'){
-      MainState.IndQuadrant = 'E';
+      ToggleStar(Star_W);
+    } else if(MainState.IndQuadrant == Q_WEST){
+      MainState.IndQuadrant = Q_EAST;
       ToggleBox(Box_E);
-      ToggleCross(Cross_E);  
+      ToggleStar(Star_E);  
     }
-    *Key = ' ';
+    *Key = KEY_NONE;
   }
 }
 
@@ -552,6 +564,7 @@ void Editing(char Key[]) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+// Save the inputed/edited lat or lon value and indicator to the appropriate NAvData after inputing and editing is done
 void SaveValue(void *) {
   ElemStruct *TargetElem;
   NavData    *TargetNav;
@@ -562,46 +575,46 @@ void SaveValue(void *) {
 
   MainState.ShowLat ? NewVal=min(NewVal,9000000) : NewVal=min(NewVal,18000000);
 
-  if(MainState.CurrentMode == 'D') {
+  if(MainState.CurrentMode == M_DESTINATION) {
     TargetElem = &MainState.Destination;
     TargetNav  = &NavValue.Destination;
     TargetInd  = LCDIndDest;
-  } else if(MainState.CurrentMode == 'M') {
+  } else if(MainState.CurrentMode == M_MAP) {
     TargetElem = &MainState.Pointer;
     TargetNav  = &NavValue.Pointer;
     TargetInd  = LCDIndGrid;
-  } else if(MainState.CurrentMode == 'A') {
+  } else if(MainState.CurrentMode == M_REFPOINTA) {
     TargetElem = &MainState.RefPointA;
     TargetNav  = &NavValue.RefPointA;
     TargetInd  = LCDIndRefPoint;
-  } else if(MainState.CurrentMode == 'B') {
+  } else if(MainState.CurrentMode == M_REFPOINTB) {
     TargetElem = &MainState.RefPointB;
     TargetNav  = &NavValue.RefPointB;
     TargetInd  = LCDIndRefPoint;
   }
 
   if(MainState.ShowLat) {
-    TargetNav->NInd    = MainState.IndQuadrant == 'N';
+    TargetNav->NInd    = MainState.IndQuadrant == Q_NORTH;
     TargetNav->Lat     = NewVal;
     TargetElem->LatSet = true;
-    if(MainState.CurrentMode == 'D' || MainState.CurrentMode == 'M')
+    if(MainState.CurrentMode == M_DESTINATION || MainState.CurrentMode == M_MAP)
       TargetElem->XYSet = false;
   } else if(MainState.ShowLon) {
-    TargetNav->EInd    = MainState.IndQuadrant == 'E';
+    TargetNav->EInd    = MainState.IndQuadrant == Q_EAST;
     TargetNav->Lon     = NewVal;
     TargetElem->LonSet = true;
-    if(MainState.CurrentMode == 'D' || MainState.CurrentMode == 'M')
+    if(MainState.CurrentMode == M_DESTINATION || MainState.CurrentMode == M_MAP)
       TargetElem->XYSet = false;
   }
 
-  if(MainState.CurrentMode == 'D')
-    ComputeNewXY('D');
-  else if(MainState.CurrentMode == 'M')
-    ComputeNewXY('M');
-  else if(MainState.CurrentMode == 'A' || MainState.CurrentMode == 'B') {
-    ComputeNewXY('D');
-    ComputeNewXY('M');
-    ComputeNewXY('P');
+  if(MainState.CurrentMode == M_DESTINATION)
+    ComputeNewXY(M_DESTINATION);
+  else if(MainState.CurrentMode == M_MAP)
+    ComputeNewXY(M_MAP);
+  else if(MainState.CurrentMode == M_REFPOINTA || MainState.CurrentMode == M_REFPOINTB) {
+    ComputeNewXY(M_DESTINATION);
+    ComputeNewXY(M_MAP);
+    ComputeNewXY(M_POSITION);
   }
   GenericRefresh(TargetNav, TargetInd);
 }
@@ -610,56 +623,57 @@ void SaveValue(void *) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
-void Updating(char Key[]) {
+// Handle keypress when the XY plotter position is changed 
+void Updating(KeypadKeys* Key) {
   ToggleNumberVal(LCDRowHi, 0, ' '); 
 
-  if(*Key == 'A') {         //Above (Up)
+  if(*Key == KEY_UP) {
     MainState.CursorY = max(MainState.CursorY-MainState.CursorStep, 0);    
     ShowInt(LCDRowHi, MainState.CursorY, 1);
     GoToXY(MainState.CursorX, MainState.CursorY);
     MainState.IndDirX = false;
-    ToggleCross(Cross_Y);
+    ToggleStar(Star_Y);
 
-  } else if(*Key == 'L') {  //Lower (Down)     
+  } else if(*Key == KEY_DOWN) {
     MainState.CursorY = min(MainState.CursorY+MainState.CursorStep, STEP_GridSizeY);
     ShowInt(LCDRowHi, MainState.CursorY, 1);
     GoToXY(MainState.CursorX, MainState.CursorY);
     MainState.IndDirX = false;
-    ToggleCross(Cross_Y);
+    ToggleStar(Star_Y);
 
-  } else if(*Key == 'B') {  //Back (Left)
+  } else if(*Key == KEY_LEFT) {
     MainState.CursorX = max(MainState.CursorX-MainState.CursorStep, 0);
     ShowInt(LCDRowHi, MainState.CursorX, 1);
     GoToXY(MainState.CursorX, MainState.CursorY);
     MainState.IndDirX = true;
-    ToggleCross(Cross_X);
+    ToggleStar(Star_X);
 
-  } else if(*Key == 'F') {  //Forward (Right)
+  } else if(*Key == KEY_RIGHT) {
     MainState.CursorX = min(MainState.CursorX+MainState.CursorStep, STEP_GridSizeX);
     ShowInt(LCDRowHi, MainState.CursorX, 1);
     GoToXY(MainState.CursorX, MainState.CursorY);
     MainState.IndDirX = true;
-    ToggleCross(Cross_X);
+    ToggleStar(Star_X);
 
-  } else if(*Key == 'S') {
+  } else if(*Key == KEY_SELECT) {
     MainState.CursorStep == STEP_SizeCorse ? MainState.CursorStep = STEP_SizeInter  :
                                             MainState.CursorStep == STEP_SizeInter ? MainState.CursorStep = STEP_SizeFine :
                                                                                     MainState.CursorStep = STEP_SizeCorse;
     MainState.CursorStep == STEP_SizeCorse ? ShowText(LCDRowLow, Corse_Msg)                  :
                                             MainState.CursorStep == STEP_SizeInter ? ShowText(LCDRowLow, Inter_Msg):
                                                                                     ShowText(LCDRowLow, Fine_Msg);
-    *Key = ' ';
+    *Key = KEY_NONE;
 
-  } else if (*Key == 'I') {
+  } else if (*Key == KEY_INPUT) {
     MainState.Inputing = 2;
     MainState.InputMax = 4;
     MainState.InputPos = 1;
     //SetInputBuf(MainState.IndDirX ? MainState.CursorX : MainState.CursorY , false);
     InitInputBuf(NULL);
     ShowText(LCDRowHi, " 0000  ");  
-    *Key = ' ';
+    *Key = KEY_NONE;
 
-  } else if (*Key == 'V') { //Back from inputing
+  } else if (*Key == KEY_BACK) { //Back from inputing
     MainState.InputBuffer[5] = 0x00;
     if (MainState.IndDirX) {
       MainState.CursorX = min(atoi(MainState.InputBuffer), STEP_GridSizeX);
@@ -671,58 +685,58 @@ void Updating(char Key[]) {
     GoToXY(MainState.CursorX, MainState.CursorY);
     MainState.InputPos = 0;
     MainState.Inputing = 0;
-    *Key = ' ';
+    *Key = KEY_NONE;
 
-  } else if (*Key == 'C' && MainState.Inputing == 1) { //Back from inputing
+  } else if (*Key == KEY_CLEAR && MainState.Inputing == 1) { //Back from inputing
     MainState.IndDirX ? ShowInt(LCDRowHi, MainState.CursorX, 1) : ShowInt(LCDRowHi, MainState.CursorY, 1);
     MainState.InputPos = 0;
     MainState.Inputing = 0;
-    *Key = ' ';
+    *Key = KEY_NONE;
 
-  } else if(*Key == 'E') {
-    if(MainState.CurrentMode == 'M') {
+  } else if(*Key == KEY_ENTER) {
+    if(MainState.CurrentMode == M_MAP) {
       NavValue.Pointer.X = MainState.CursorX;
       NavValue.Pointer.Y = MainState.CursorY;
       MainState.Pointer.XYSet  = true;
       MainState.Pointer.LatSet = false;
       MainState.Pointer.LonSet = false;
-      ComputeNewGrid('M');
+      ComputeNewGrid(M_MAP);
       GenericRefresh(&NavValue.Pointer, LCDIndGrid);
 
-    } else if(MainState.CurrentMode == 'D') {
+    } else if(MainState.CurrentMode == M_DESTINATION) {
       NavValue.Destination.X = MainState.CursorX;
       NavValue.Destination.Y = MainState.CursorY;
       MainState.Destination.XYSet  = true;
       MainState.Destination.LatSet = false;
       MainState.Destination.LonSet = false;
-      ComputeNewGrid('D');
+      ComputeNewGrid(M_DESTINATION);
       GenericRefresh(&NavValue.Destination, LCDIndDest);
 
-    } else if(MainState.CurrentMode == 'A') {
+    } else if(MainState.CurrentMode == M_REFPOINTA) {
       NavValue.RefPointA.X = MainState.CursorX;
       NavValue.RefPointA.Y = MainState.CursorY;
       MainState.RefPointA.XYSet = true;
-      ComputeNewXY('M');
-      ComputeNewXY('D');
-      ComputeNewXY('P');
+      ComputeNewXY(M_MAP);
+      ComputeNewXY(M_DESTINATION);
+      ComputeNewXY(M_POSITION);
       GenericRefresh(&NavValue.RefPointA, LCDIndRefPoint);
 
-    } else if(MainState.CurrentMode == 'B') {
+    } else if(MainState.CurrentMode == M_REFPOINTB) {
       NavValue.RefPointB.X = MainState.CursorX;
       NavValue.RefPointB.Y = MainState.CursorY;
       MainState.RefPointB.XYSet = true;
-      ComputeNewXY('M');
-      ComputeNewXY('D');
-      ComputeNewXY('P');
+      ComputeNewXY(M_MAP);
+      ComputeNewXY(M_DESTINATION);
+      ComputeNewXY(M_POSITION);
       GenericRefresh(&NavValue.RefPointB, LCDIndRefPoint);
     }
 
-    *Key = ' ';
+    *Key = KEY_NONE;
     MainState.CursorX = 0;
     MainState.CursorY = 0;    
     MainState.Updating = false;
 
-  } else if( *Key=='C' || *Key == 'H' || *Key == 'M' || *Key == 'D' || *Key == 'P' || *Key == 'R' ) {
+  } else if( *Key==KEY_CLEAR || *Key == KEY_HEADING || *Key == KEY_MAP || *Key == KEY_DEST || *Key == KEY_POSITION || *Key == KEY_REFPOINT ) {
     MainState.Updating = false;
   }
 }

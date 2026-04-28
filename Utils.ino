@@ -25,15 +25,20 @@
 // ReadMergeLong reads four 8bits bytes from consecutive EEPROM addrs and return a single 32bits long
 // UpdateSplitInt writes a 16bits int to two 8bits bytes to consecutive EEPROM addrs
 // ReadMergeInt reads two 8bits bytes from consecutive EEPROM addrs and return a single 16bits int
-// ResetParam sets to default all the NavData values and some internal state values as well as overwiting everyting in the EEPROM 
+// ResetParam sets to default all the NavData values and some internal state values as well as overwiting everyting in the EEPROM
+// SetTask sets a task at position Slot to be executed every Delay miliseconds
+// HandleTask runs and update tasks according to their timers
+// RunTask runs all tasks that are due according to their timers
+// CheckTask checks the next task to schedule
 
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+// Display the given latitude value
 void DisplayLat(long Lat, bool NInd, bool Precision) {
-  NInd ?  ToggleBox(Box_N)     : ToggleBox(Box_S);
-  NInd ?  ToggleCross(Cross_N) : ToggleCross(Cross_S);
+  NInd ?  ToggleBox(Box_N)   : ToggleBox(Box_S);
+  NInd ?  ToggleStar(Star_N) : ToggleStar(Star_S);
 
   Precision ? ShowText(LCDRowHi, "  00000") : ShowText(LCDRowHi, "   0000");
 
@@ -57,9 +62,10 @@ void DisplayLat(long Lat, bool NInd, bool Precision) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+// Display the given longitude value
 void DisplayLon(long Lon, bool EInd, bool Precision) {
-  EInd ?  ToggleBox(Box_E)     : ToggleBox(Box_W);
-  EInd ?  ToggleCross(Cross_E) : ToggleCross(Cross_W);      
+  EInd ?  ToggleBox(Box_E)   : ToggleBox(Box_W);
+  EInd ?  ToggleStar(Star_E) : ToggleStar(Star_W);      
 
   Precision ? ShowText(LCDRowHi, "  00000") : ShowText(LCDRowHi, "   0000");
 
@@ -85,9 +91,10 @@ void DisplayLon(long Lon, bool EInd, bool Precision) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+// Reset bool values used for interface state
 void SetInterface(void *) {
-  MainState.ShowDist      = MainState.CurrentMode != 'H';  // Dist not used in mode H
-  MainState.ShowLat       = MainState.CurrentMode == 'H';
+  MainState.ShowDist      = MainState.CurrentMode != M_HEADING;  // Dist not used in mode Heading
+  MainState.ShowLat       = MainState.CurrentMode == M_HEADING;
   MainState.ShowLon       = false;
   MainState.ShowPrecision = false;
   MainState.ShowSpeed     = false;
@@ -102,6 +109,7 @@ void SetInterface(void *) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+// Set the input buffer to a given value
 void SetInputBuf(long Val, bool IndLon) {
   char IntBuffer[10];
   byte j = 0, len;
@@ -140,7 +148,7 @@ void SetInputBuf(long Val, bool IndLon) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
-
+// Set the input buffer to all zero
 void InitInputBuf(void *) {
 
   for(byte i=0; i<8; i++) {
@@ -156,6 +164,7 @@ void InitInputBuf(void *) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+// Display the given ditance value
 void DisplayDist(long Dist) {
   ShowText(LCDRowHi, "   0000");
 
@@ -182,6 +191,7 @@ void DisplayDist(long Dist) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+// Display the current time
 void DisplayTime(void *) {
   ShowText(LCDRowLow, MaskBlank_Msg);
 
@@ -198,18 +208,19 @@ void DisplayTime(void *) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+// Display the current date
 void DisplayDate(void *) {
   switch(NavValue.Date[0]) {
-    case  '0':  ToggleBox(Box_0);  ToggleCross(Cross_0);  break;
-    case  '1':  ToggleBox(Box_1);  ToggleCross(Cross_1);  break;
-    case  '2':  ToggleBox(Box_2);  ToggleCross(Cross_2);  break;
-    case  '3':  ToggleBox(Box_3);  ToggleCross(Cross_3);  break;
-    case  '4':  ToggleBox(Box_4);  ToggleCross(Cross_4);  break;
-    case  '5':  ToggleBox(Box_5);  ToggleCross(Cross_5);  break;
-    case  '6':  ToggleBox(Box_6);  ToggleCross(Cross_6);  break;
-    case  '7':  ToggleBox(Box_7);  ToggleCross(Cross_7);  break;
-    case  '8':  ToggleBox(Box_8);  ToggleCross(Cross_8);  break;
-    case  '9':  ToggleBox(Box_9);  ToggleCross(Cross_9);  break;
+    case  '0':  ToggleBox(Box_0);  ToggleStar(Star_0);  break;
+    case  '1':  ToggleBox(Box_1);  ToggleStar(Star_1);  break;
+    case  '2':  ToggleBox(Box_2);  ToggleStar(Star_2);  break;
+    case  '3':  ToggleBox(Box_3);  ToggleStar(Star_3);  break;
+    case  '4':  ToggleBox(Box_4);  ToggleStar(Star_4);  break;
+    case  '5':  ToggleBox(Box_5);  ToggleStar(Star_5);  break;
+    case  '6':  ToggleBox(Box_6);  ToggleStar(Star_6);  break;
+    case  '7':  ToggleBox(Box_7);  ToggleStar(Star_7);  break;
+    case  '8':  ToggleBox(Box_8);  ToggleStar(Star_8);  break;
+    case  '9':  ToggleBox(Box_9);  ToggleStar(Star_9);  break;
   }
   ToggleNumberVal(LCDRowHi, 0, NavValue.Date[1]);
   ToggleNumberVal(LCDRowHi, 1, '-');
@@ -224,7 +235,8 @@ void DisplayDate(void *) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
-// ShowInt does not erase value before the offset but erase the rest of the row after
+// Print a value on a specific Row starting at Position
+//  does not erase value before the offset but erase the rest of the row after
 void ShowInt(byte Row, int Val, byte Offset) {
   char IntBuffer[15];
   byte Index = 0;
@@ -249,7 +261,9 @@ void ShowInt(byte Row, int Val, byte Offset) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
-// ShowInt does not erase value before the offset but erase the rest of the row after
+// Print a value on a specific Row starting at Position
+//  does not erase value before the offset but erase the rest of the row after
+//  overloaded to take a long instead of a int
 void ShowInt(byte Row, long *Val, byte Offset) {
   char IntBuffer[15];
   byte Index = 0;
@@ -274,7 +288,8 @@ void ShowInt(byte Row, long *Val, byte Offset) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
-// ShowText expect padding before for aligment, and erase the rest of the row if shorter than 7
+// Print a cstring on a specific Row,
+//   expect padding before for aligment, and erase the rest of the row if shorter than 7
 void ShowText(byte Row, char Text[]) {
   bool Ended = false;
 
@@ -292,6 +307,7 @@ void ShowText(byte Row, char Text[]) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+// Convert the given long value to it's absolute and return the signs it was before conversion (bool)
 bool LatLonAbsolute(long *Val) {
   long Out;
   if( *Val < 0 ) {
@@ -306,6 +322,7 @@ bool LatLonAbsolute(long *Val) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+// Take the absolute lat or lon value, it's N/S or E/W indicator and return the propper +/- lat or lon
 long AddLatLonSign( long Val, bool *Ind, bool LatMode) {
   if (LatMode)
     return Ind ? Val    : Val*-1;
@@ -317,6 +334,7 @@ long AddLatLonSign( long Val, bool *Ind, bool LatMode) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+// Return a long that is the given char value that been multiplied by a given float factor
 long ConvertStringToNum(char *Val, float *Factor) {
   float ConvVal;
 
@@ -329,6 +347,7 @@ long ConvertStringToNum(char *Val, float *Factor) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+// Copie the current position to the selected waypoint
 void SavePosition(void *) {
   NavValue.Position->Lat  = NavValue.Current.Lat;
   NavValue.Position->Lon  = NavValue.Current.Lon;
@@ -343,6 +362,7 @@ void SavePosition(void *) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+// Erase the values from the selected waypoint
 void ClearPosition(void *) {
   NavValue.Position->Lat  = 0;
   NavValue.Position->Lon  = 0;
@@ -357,6 +377,7 @@ void ClearPosition(void *) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+// Reads the EEPROM and set the appropriate NavData when valid
 void ReadEEPROM(void *) {
   byte Offset;
 
@@ -387,6 +408,7 @@ void ReadEEPROM(void *) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+//
 void ReadDetailEEPROM(NavData *Data, ElemStruct *State, byte Addr) {
 
   // 0-3 Lat, 4-7 Lon, 8-9 X, 10-11 Y, 12 LatLonVal, 13 XYVal 
@@ -413,6 +435,7 @@ void ReadDetailEEPROM(NavData *Data, ElemStruct *State, byte Addr) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+// Writes to EEPROM when a NavData is valid and different
 void UpdateEEPROM(void *) {
   byte Offset;
   long ValLong;
@@ -446,6 +469,7 @@ void UpdateEEPROM(void *) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+//
 void UpdateDetailEEPROM(NavData *Data, ElemStruct *State, byte Addr) {
   long ValLong;
 
@@ -475,7 +499,8 @@ void UpdateDetailEEPROM(NavData *Data, ElemStruct *State, byte Addr) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
-void UpdateSplitLong(long Val, int ID) {
+// Write a 32bits long to four 8bits bytes to consecutive EEPROM addrs
+void UpdateSplitLong(long Val, byte ID) {
   EEPROM.update(ID,   (Val & 0xff000000) >> 24); 
   EEPROM.update(ID+1, (Val & 0x00ff0000) >> 16); 
   EEPROM.update(ID+2, (Val & 0x0000ff00) >>  8); 
@@ -486,7 +511,8 @@ void UpdateSplitLong(long Val, int ID) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
-long ReadMergeLong(int ID) {
+// Read four 8bits bytes from consecutive EEPROM addrs and return a single 32bits long
+long ReadMergeLong(byte ID) {
   long   Val  = (long)EEPROM.read(ID)   << 24;
          Val += (long)EEPROM.read(ID+1) << 16;
          Val += (long)EEPROM.read(ID+2) << 8 ;
@@ -497,7 +523,8 @@ long ReadMergeLong(int ID) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
-void UpdateSplitInt(int Val, int ID) {
+// Write a 16bits int to two 8bits bytes to consecutive EEPROM addrs
+void UpdateSplitInt(int Val, byte ID) {
   EEPROM.update(ID  , (Val & 0xff00) >>  8); 
   EEPROM.update(ID+1, (Val & 0x00ff)      ); 
 }
@@ -506,7 +533,8 @@ void UpdateSplitInt(int Val, int ID) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
-int ReadMergeInt(int ID) {
+// Read two 8bits bytes from consecutive EEPROM addrs and return a single 16bits int
+int ReadMergeInt(byte ID) {
   int    Val = EEPROM.read(ID)   << 8;
   return Val + EEPROM.read(ID+1)     ;
 }
@@ -515,6 +543,7 @@ int ReadMergeInt(int ID) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+// Set to default all the NavData values and some internal state values as well as overwiting everyting in the EEPROM 
 void ResetParam(void *) {
   ElemStruct *TargetElem;
   NavData    *TargetNav;
@@ -561,5 +590,208 @@ void ResetParam(void *) {
   for(i=0; i<=EEPROM_NbMaxAddrUsed; i++)
     EEPROM.update(i, 0);
 }
+
+//     #####     #####     #####     #####     #####
+//     #####     #####     #####     #####     #####
+//     #####     #####     #####     #####     #####
+
+//Heavily stripped down version of https://www.arduino.cc/reference/en/libraries/arduino-timer/
+
+// Sets a task at position Slot to be executed every Delay miliseconds
+inline void SetTask(byte Slot, unsigned int Delay, Task_Handler Handler) {
+  struct Task *Curr = &TaskList[Slot];
+
+  Curr->Handler = Handler;
+  Curr->LastRun = millis();
+  Curr->Delay   = Delay;
+}
+
+// Run and check tasks according to their timers
+unsigned int HandleTask() {
+  RunTask();
+  return CheckTask();
+}
+
+// Run all tasks that are due according to their timers
+void RunTask() {
+  for (struct Task *Curr = TaskList; Curr < TaskEnd; ++Curr){
+    //if (Curr->Handler) {
+      const unsigned int Time = millis(); //ulong for longer than ~65 seconds
+
+      if (Time - Curr->LastRun >= Curr->Delay) {
+        Curr->Handler();
+        Curr->LastRun = Time; // += Curr->Delay; // TBD if "no drift" solution is usefull
+      }
+    //}
+  }
+}
+
+// Check the next task to schedule
+unsigned int CheckTask() {
+  unsigned int Wait = 0xFFFF;
+  const unsigned int Start = millis(); //ulong for longer than ~65 seconds
+
+  for (const struct Task *Curr = TaskList; Curr < TaskEnd; ++Curr){
+    //if (Curr->Handler) {
+      const unsigned int Delta = Start - Curr->LastRun;
+
+      if (Delta >= Curr->Delay)
+        return 0;
+	
+      const unsigned int Remaining = Curr->Delay - Delta;
+      if (Remaining < Wait)
+        Wait = Remaining;
+    //}
+  }
+
+  return Wait;
+}
+
+//     #####     #####     #####     #####     #####
+//     #####     #####     #####     #####     #####
+//     #####     #####     #####     #####     #####
+
+//Heavily stripped down version of https://www.arduino.cc/reference/en/libraries/keypad/
+
+// Returns a single key only
+char GetCurrKey() {
+  if (GetKeysPressed() && KeysPressed[0].StateChanged && (KeysPressed[0].State==PRESSED))
+    return KeysPressed[0].Val;
+
+  return NO_KEY;
+}
+
+// Populate the key list
+bool GetKeysPressed() {
+  ScanKeys();
+  return UpdateList();
+}
+
+// Hardware scan, KeyBitMap stores ALL the keys that are being pressed
+void ScanKeys() {
+  byte Mask = 0b00000001;
+  
+  for (byte c=0; c<COLUMN_NUM; c++) {
+    // Begin column pulse output
+    pinMode(PinColumn[c], OUTPUT);
+    digitalWrite(PinColumn[c], LOW);
+
+    for (byte r=0; r<ROW_NUM; r++) {  
+      // keypress is active low
+      if (digitalRead(PinRows[r]) == LOW)
+          KeyBitMap[r] |= Mask;
+      else
+          KeyBitMap[r] &= ~Mask;
+    }
+  
+    // Set pin to high impedance input, effectively ends column pulse
+    digitalWrite(PinColumn[c], HIGH);
+    pinMode(PinColumn[c], INPUT);
+    Mask <<= 1;
+  }
+}
+
+// Manage the list without rearranging the keys. Returns true if any keys on the list changed state
+bool UpdateList() {
+  // Delete any IDLE keys
+  for (byte i=0; i<LIST_MAX; i++) {
+    if (KeysPressed[i].State == IDLE) {
+      KeysPressed[i].Val  = NO_KEY;
+      KeysPressed[i].Code = NOT_FOUND;
+      KeysPressed[i].StateChanged = false;
+    }
+  }
+
+  // Add new keys to empty slots in the key list
+  for (byte r=0; r<ROW_NUM; r++) {
+    byte Mask = 0b00000001;
+    for (byte c=0; c<COLUMN_NUM; c++) {
+      bool IsPressed = KeyBitMap[r] & Mask;
+      byte KeyCode = r * COLUMN_NUM + c;
+      byte Idx = FindInList(KeyCode);
+      // Key is already on the list so set its next state
+      if (Idx != NOT_FOUND)
+        NextKeyState(Idx, IsPressed);
+      // Key is NOT on the list so add it
+      else if (IsPressed) {
+        for (byte i=0; i<LIST_MAX; i++) {
+          // Find an empty slot or don't add key to list
+          if (KeysPressed[i].Val == NO_KEY) {
+            KeysPressed[i].Val   = KeypadLayout[KeyCode];
+            KeysPressed[i].Code  = KeyCode;
+            KeysPressed[i].State = IDLE;   // Keys NOT on the list have an initial state of IDLE
+            NextKeyState (i, IsPressed);
+            break;
+          }
+        }
+      }
+      Mask <<= 1;
+    }
+  }
+
+  // Report if the user changed the state of any key.
+  for (byte i=0; i<LIST_MAX; i++) {
+    if (KeysPressed[i].StateChanged)
+      return true;
+  }
+  return false;
+}
+
+// Search by code for a key in the list of active keys
+// Returns 255 if not found or the index into the list of active keys
+byte FindInList(byte Code) {
+  for (byte i=0; i<LIST_MAX; i++) {
+    if (KeysPressed[i].Code == Code)
+      return i;
+  }
+  return NOT_FOUND;
+}
+
+// This function is a state machine but is also used for debouncing the keys
+void NextKeyState(byte Idx, bool IsPressed) {
+  KeysPressed[Idx].StateChanged = false;
+
+  switch (KeysPressed[Idx].State) {
+    case IDLE:
+        if (IsPressed) {
+          TransitionTo (Idx, PRESSED);
+          // Get ready for next HOLD state
+          KeyHoldTimer = millis();
+          //KeysPressed[Idx].HoldTimer = millis();
+        }   
+      break;
+    case PRESSED:  
+        if (IsPressed) {
+          // Waiting for a key HOLD...
+          if ((millis()-KeyHoldTimer) > KeyHoldDelay) //KeysPressed[Idx].HoldTimer
+            TransitionTo(Idx, HOLD);
+        } else 
+          // or for a key to be RELEASED
+          TransitionTo (Idx, RELEASED);
+      break;
+    case HOLD:
+        if (!IsPressed)
+          TransitionTo(Idx, RELEASED);
+      break;
+    case RELEASED:
+        TransitionTo(Idx, IDLE);
+      break;
+  }
+}
+
+void TransitionTo(byte Idx, KeyStates NextState) {
+  KeysPressed[Idx].State        = NextState;
+  KeysPressed[Idx].StateChanged = true;
+
+  // Keypad event listener could be here
+}
+
+//     #####     #####     #####     #####     #####
+//     #####     #####     #####     #####     #####
+//     #####     #####     #####     #####     #####
+
+
+
+
 
 

@@ -7,6 +7,11 @@
 // XYScaling used by the previous to do computations
 // CalibrateXY is called when turning the unit on to make sure the plotter is at a known XY position
 
+//     #####     #####     #####     #####     #####
+//     #####     #####     #####     #####     #####
+//     #####     #####     #####     #####     #####
+
+// Set the target for the plotter to move to
 void GoToXY(int X, int Y) {
   digitalWrite(StepEnablePin, HIGH);
   StepMotorVal.TargetX = min(max(X, 0), STEP_GridSizeX);
@@ -23,6 +28,8 @@ void GoToXY(int X, int Y) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+// Called regularly to move the XY plotter in a few steps increment
+//   hands back control to avoid locking everyting while moving
 void MakeStep(void *) {
   byte StepX = 0, StepY = 0;
   byte DirX = LOW,  DirY = LOW;
@@ -96,19 +103,20 @@ void MakeStep(void *) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
-void ComputeNewXY(char* Mode) {
+// Calculate new XY values from grid coordinates when needed
+void ComputeNewXY(DisplayModes Mode) {
   
   if (MainState.CursorValid) {
-    if(Mode == 'H') {
+    if(Mode == M_HEADING) {
       XYScaling(&NavValue.Current);
-    } else if(Mode == 'P' && MainState.WaypointsSet[MainState.CurrentWaypoint]) {
+    } else if(Mode == M_POSITION && MainState.WaypointsSet[MainState.CurrentWaypoint]) {
       XYScaling(NavValue.Position);
-    } else if(Mode == 'M') {
+    } else if(Mode == M_MAP) {
       if(MainState.Pointer.LatSet && MainState.Pointer.LonSet) {
         XYScaling(&NavValue.Pointer);
-        MainState.Pointer.XYSet  = true;
+        MainState.Pointer.XYSet = true;
       }
-    } else if(Mode == 'D') {
+    } else if(Mode == M_DESTINATION) {
       if(MainState.Destination.LatSet && MainState.Destination.LonSet) {
         XYScaling(&NavValue.Destination);
         MainState.Destination.XYSet  = true;
@@ -121,6 +129,7 @@ void ComputeNewXY(char* Mode) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+// Used by the previous to do computations
 void XYScaling(NavData *Data) {
   long LatRef, LonRef;
   long LatLonDelta, Lat, Lon;
@@ -144,6 +153,8 @@ void XYScaling(NavData *Data) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+// Make sure the plotter is at a known XY position
+//   called when turning the unit on
 void CalibrateXY(void *) {
   StepMotorVal.CurrentX = STEP_GridSizeX + STEP_Overshoot;
   StepMotorVal.CurrentY = STEP_GridSizeY + STEP_Overshoot;

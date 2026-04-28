@@ -13,6 +13,12 @@
 // LatLonScaling used by the previous to do computations
 // ComputeScale calculates the map scale factor from XY plotter known size
 
+//     #####     #####     #####     #####     #####
+//     #####     #####     #####     #####     #####
+//     #####     #####     #####     #####     #####
+
+// Calculate how many meters there is between 2 coordinates
+//   flat plane for ~<100Km and sphere for longer distances
 long Distance(NavData *Src, NavData *Dest) {
 
   float DistMeter, Lat1F, Lon1F, Lat2F, Lon2F;
@@ -31,7 +37,7 @@ long Distance(NavData *Src, NavData *Dest) {
 
   //beyond 100Km, spherical is better, and angles are less sensitive to floating point rounding
   //  this could be pushed to 500km and still be fairly good...
-  if( DistMeter >= 100000 ) {
+  if( DistMeter >= FlatPlaneAproximDist ) {
 
     Lat1F = DEG_TO_RAD * (Lat1 / LatLonConvFactorF);
     Lon1F = DEG_TO_RAD * (Lon1 / LatLonConvFactorF);
@@ -52,6 +58,7 @@ long Distance(NavData *Src, NavData *Dest) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+// Caluclate the angle from a coordinate to an other
 byte Direction(NavData *Src, NavData *Dest) {
 
   float Lat1 = AddLatLonSign( Src->Lat,  &Src->NInd,  true);
@@ -80,9 +87,10 @@ byte Direction(NavData *Src, NavData *Dest) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
-void ProcessNMEAData(char *NEMAData, byte MsgType) {
-  char *MsgTok, MsgElem[12];
-  const char *Delim = ",";
+// Parse the received Serial messages
+void ProcessNMEAData(char *NEMAData, MsgTypes MsgType) {
+  char *MsgTok, *MsgTime, MsgElem[12];
+  constexpr char *Delim = ",";
   long  MinuteDegConv;
   static bool LocalCurrentValid = false;
 
@@ -92,7 +100,7 @@ void ProcessNMEAData(char *NEMAData, byte MsgType) {
   MsgTok = strsep(&NEMAData, Delim);
 
   if( MsgTok != NULL ) {
-    if( MsgType == MsgTypeGPGGA ) {
+    if( MsgType == MSG_GPGGA ) {
 
 //       UTC time   Latitude    Longitude    Fix      Altitude M
 //	                        IndNS        IndEW          Unit
@@ -156,7 +164,7 @@ void ProcessNMEAData(char *NEMAData, byte MsgType) {
           NavValue.Altitude = 0;
       }
 
-    } else if( MsgType == MsgTypeGPRMC ) {
+    } else if( MsgType == MSG_GPRMC ) {
 
 //       UTC time     Latitude   Longitude     Speed Direction
 //	                Status      IndNS        IndEW         Date
@@ -165,7 +173,7 @@ void ProcessNMEAData(char *NEMAData, byte MsgType) {
 //0         1         2         3         4         5         6
 
       // Time
-      ProcessTime(MsgTok);
+      MsgTime = MsgTok;
 
       // Valid indicator
       MsgTok = strsep(&NEMAData, Delim);
@@ -199,7 +207,9 @@ void ProcessNMEAData(char *NEMAData, byte MsgType) {
         NavValue.Date[4] = MsgTok[0];
         NavValue.Date[5] = MsgTok[1];
       }
-    } //else if( MsgType == MsgTypeGPVTG ) {
+
+      ProcessTime(MsgTime);
+    } //else if( MsgType == MSG_GPVTG ) {
 
     //}
   }
@@ -209,9 +219,10 @@ void ProcessNMEAData(char *NEMAData, byte MsgType) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+// Calculate the time with offset from UTC time
 void ProcessTime(char MsgTime[]) {
   char TimeElem[3];
-  byte  Value, Offset = 0;
+  byte Value, Offset = 0;
 
   TimeElem[0] = MsgTime[2];
   TimeElem[1] = MsgTime[3];
@@ -254,98 +265,104 @@ void ProcessTime(char MsgTime[]) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+// Compute many distances and directions (round robin) as well as scaling factors, map ratio 
+//   and XY coordinate when needed, it also keep the EEPROM updated
+//   called several time per second an only runs when there's no Serial message to process
 void ComputeNewAngleDist(void *){
-  static byte CmpComputeStep = 0;
+  static byte CmpComputeStep = 1;
 
-  if(CmpComputeStep == 1) {
+  switch(CmpComputeStep){
+  case 1:
     if (MainState.CurrentValid && MainState.Destination.LatSet && MainState.Destination.LonSet) 
       NavValue.Destination.Angle = Direction(&NavValue.Current, &NavValue.Destination);
     //else
     //  NavValue.Destination.Angle = 255;
-
-  } else if(CmpComputeStep == 2) {
+  break;
+  case 2:
     if (MainState.CurrentValid && MainState.Pointer.LatSet && MainState.Pointer.LonSet)
       NavValue.Pointer.Angle     = Direction(&NavValue.Current, &NavValue.Pointer);
     //else
     //  NavValue.Destination.Angle = 255;
-
-  } else if(CmpComputeStep == 3) {
+  break;
+  case 3:
     if (MainState.CurrentValid && MainState.RefPointB.LatSet && MainState.RefPointB.LonSet)
       NavValue.RefPointB.Angle    = Direction(&NavValue.Current, &NavValue.RefPointB);
     //else
     //  NavValue.Destination.Angle = 255;
-
-  } else if(CmpComputeStep == 4) {
+  break;
+  case 4:
     if (MainState.CurrentValid && MainState.RefPointA.LatSet && MainState.RefPointA.LonSet)
       NavValue.RefPointA.Angle    = Direction(&NavValue.Current, &NavValue.RefPointA);
     //else
     //  NavValue.Destination.Angle = 255;
-
-  } else if(CmpComputeStep == 5) {
+  break;
+  case 5:
     if (MainState.CurrentValid && MainState.WaypointsSet[MainState.CurrentWaypoint] )
       NavValue.Position->Angle     = Direction(&NavValue.Current, NavValue.Position);
     //else
     //  NavValue.Destination.Angle = 255;
 
-
-  } else if(CmpComputeStep == 6) {
+  break;
+  case 6:
     if (MainState.CurrentValid && MainState.Destination.LatSet && MainState.Destination.LonSet)
       NavValue.Destination.Dist = Distance(&NavValue.Current, &NavValue.Destination);
     //else
     //  NavValue.Destination.Dist = -1;
-
-  } else if(CmpComputeStep == 7) {
+  break;
+  case 7:
     if (MainState.CurrentValid && MainState.Pointer.LatSet && MainState.Pointer.LonSet)
       NavValue.Pointer.Dist     = Distance(&NavValue.Current, &NavValue.Pointer);
     //else
     //  NavValue.Pointer.Dist = -1;
-
-  } else if(CmpComputeStep == 8) {
+  break;
+  case 8:
     if (MainState.CurrentValid && MainState.RefPointB.LatSet && MainState.RefPointB.LonSet)
       NavValue.RefPointB.Dist    = Distance(&NavValue.Current, &NavValue.RefPointB);
     //else
     //  NavValue.RefPointB.Dist = -1;
-
-  } else if(CmpComputeStep == 9) {
+  break;
+  case 9:
     if (MainState.CurrentValid && MainState.RefPointA.LatSet && MainState.RefPointA.LonSet)
       NavValue.RefPointA.Dist    = Distance(&NavValue.Current, &NavValue.RefPointA);
     //else
     //  NavValue.RefPointA.Dist = -1;
-
-  } else if(CmpComputeStep == 10) {
+  break;
+  case 10:
     if (MainState.CurrentValid && MainState.WaypointsSet[MainState.CurrentWaypoint] )
       NavValue.Position->Dist     = Distance(&NavValue.Current, NavValue.Position);
     //else
     //  NavValue.Position->Dist = -1;
 
-
-  } else if (CmpComputeStep == 11) {
+  break;
+  case 11:
     ComputeRatio(NULL);
-
-  } else if(CmpComputeStep == 12) {
+  break;
+  case 12:
     if(MainState.CursorValid) {
       ComputeScale(NULL);
 
       if(MainState.CurrentValid)
-        ComputeNewXY('H');
+        ComputeNewXY(M_HEADING);
 
       if(!MainState.Destination.XYSet)
-        ComputeNewXY('D');
+        ComputeNewXY(M_DESTINATION);
         
       if(!MainState.Pointer.XYSet)
-        ComputeNewXY('M');  
+        ComputeNewXY(M_MAP);  
     }
 
     if( MainState.CurrentValid && MainState.CurrentWaypoint == 0 &&
         !MainState.WaypointsSet[MainState.CurrentWaypoint] &&
         NavValue.Current.Lat != 0 && NavValue.Current.Lon != 0 )
       SavePosition(NULL);
-
-  } else if(CmpComputeStep == 13) {
+  break;
+  case 13:
     EEPROM.update(EEPROM_ControlVal, EEPROM_MagicValue); 
     UpdateEEPROM(NULL);
 
-    CmpComputeStep = 0;
+  default  :
+    CmpComputeStep = 1;
+  break;
   }
   CmpComputeStep++;
 }
@@ -354,6 +371,7 @@ void ComputeNewAngleDist(void *){
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+// Pre-computes the ratios used to calcute grid coordinate and XY values when needed
 void ComputeRatio(void *) {
   float LatLonDelta, StepMotorDelta;
   long LatRefA, LonRefA, LatRefB, LonRefB;
@@ -384,10 +402,10 @@ void ComputeRatio(void *) {
     StepMotorVal.ScalingFactorLon = StepMotorDelta/LatLonDelta;
 
     if(!MainState.Destination.LatSet || !MainState.Destination.LonSet)
-      ComputeNewGrid('D');
+      ComputeNewGrid(M_DESTINATION);
 
     if(!MainState.Pointer.LatSet || !MainState.Pointer.LonSet)
-      ComputeNewGrid('M');
+      ComputeNewGrid(M_MAP);
   }
 }
 
@@ -395,16 +413,17 @@ void ComputeRatio(void *) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
-void ComputeNewGrid(char* Mode) {
+// Calculates new grid coordinates from XY values when needed
+void ComputeNewGrid(DisplayModes Mode) {
 
   if (MainState.CursorValid) {
-    if(Mode == 'M') {
+    if(Mode == M_MAP) {
       if(MainState.Pointer.XYSet) {
         LatLonScaling(&NavValue.Pointer);
         MainState.Pointer.LatSet = true;
         MainState.Pointer.LonSet = true;
       }      
-    } else if(Mode == 'D') {
+    } else if(Mode == M_DESTINATION) {
       if(MainState.Destination.XYSet) {
         LatLonScaling(&NavValue.Destination);
         MainState.Destination.LatSet = true;
@@ -418,6 +437,7 @@ void ComputeNewGrid(char* Mode) {
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
 
+// Used by the previous to do computations
 void LatLonScaling(NavData *Data) {
   long XYDelta,
        LatRef, LonRef;  
@@ -440,8 +460,9 @@ void LatLonScaling(NavData *Data) {
 
 //     #####     #####     #####     #####     #####
 //     #####     #####     #####     #####     #####
-//     #####     #####     #####     #####     #####+
+//     #####     #####     #####     #####     #####
 
+// Calculates the map scale factor from XY plotter known size
 void ComputeScale(void *) {
   long LatRefA,  LatRefB,
        //LonRefA,  LonRefB,
@@ -464,8 +485,8 @@ void ComputeScale(void *) {
   //NavValue.Scale = round(LonDelta / StepMotorDeltaX) * 100;
   NavValue.Scale = round(LatDelta / StepMotorDeltaY) * 100;  // 100 cm in a meter
 
-  //If Destination within 2mm (as messured on the map) of the current position
-  Dist = NavValue.Scale / 500; // distance in m = Scale/500  =  ( Scale * 2[mm] ) / 1000[mm per m]
+  //If Destination within few mm (as messured on the map) of the current position
+  Dist = NavValue.Scale / DestProximity; 
 
   NavValue.NearZone = ( MainState.Destination.LatSet && MainState.Destination.LonSet  &&
                         MainState.CurrentValid       && NavValue.Destination.Dist > 0 &&
