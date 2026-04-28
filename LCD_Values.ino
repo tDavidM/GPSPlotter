@@ -179,26 +179,26 @@ void ClearAllInd(void *) {
 
 // Control 8 segments forming the outer square box
 void ToggleBox(byte MaskBox) {
-  LCDBuffer[8]  = MaskBox & SBit1 != 0x00  ? LCDBuffer[8]  | Bit5   :  LCDBuffer[8]  & NBit5;
-  LCDBuffer[8]  = MaskBox & SBit2 != 0x00  ? LCDBuffer[8]  | Bit6   :  LCDBuffer[8]  & NBit6;
-  LCDBuffer[8]  = MaskBox & SBit3 != 0x00  ? LCDBuffer[8]  | Bit7   :  LCDBuffer[8]  & NBit7;
-  LCDBuffer[11] = MaskBox & SBit4 != 0x00  ? LCDBuffer[11] | Bit7   :  LCDBuffer[11] & NBit7;
-  LCDBuffer[8]  = MaskBox & SBit5 != 0x00  ? LCDBuffer[8]  | Bit1   :  LCDBuffer[8]  & NBit1;
-  LCDBuffer[8]  = MaskBox & SBit6 != 0x00  ? LCDBuffer[8]  | Bit2   :  LCDBuffer[8]  & NBit2;
-  LCDBuffer[8]  = MaskBox & SBit7 != 0x00  ? LCDBuffer[8]  | Bit3   :  LCDBuffer[8]  & NBit3;
-  LCDBuffer[8]  = MaskBox & SBit8 != 0x00  ? LCDBuffer[8]  | Bit4   :  LCDBuffer[8]  & NBit4;
+  LCDBuffer[8]  = (MaskBox & SBit1) != 0x00  ? LCDBuffer[8]  | Bit5   :  LCDBuffer[8]  & NBit5;
+  LCDBuffer[8]  = (MaskBox & SBit2) != 0x00  ? LCDBuffer[8]  | Bit6   :  LCDBuffer[8]  & NBit6;
+  LCDBuffer[8]  = (MaskBox & SBit3) != 0x00  ? LCDBuffer[8]  | Bit7   :  LCDBuffer[8]  & NBit7;
+  LCDBuffer[11] = (MaskBox & SBit4) != 0x00  ? LCDBuffer[11] | Bit7   :  LCDBuffer[11] & NBit7;
+  LCDBuffer[8]  = (MaskBox & SBit5) != 0x00  ? LCDBuffer[8]  | Bit1   :  LCDBuffer[8]  & NBit1;
+  LCDBuffer[8]  = (MaskBox & SBit6) != 0x00  ? LCDBuffer[8]  | Bit2   :  LCDBuffer[8]  & NBit2;
+  LCDBuffer[8]  = (MaskBox & SBit7) != 0x00  ? LCDBuffer[8]  | Bit3   :  LCDBuffer[8]  & NBit3;
+  LCDBuffer[8]  = (MaskBox & SBit8) != 0x00  ? LCDBuffer[8]  | Bit4   :  LCDBuffer[8]  & NBit4;
 }
 
 // Control 8 segments forming the inner star/spokes
 void ToggleStar(byte MaskStar) {
-  LCDBuffer[9]  = MaskStar & SBit1 != 0x00  ? LCDBuffer[9]  | Bit16  :  LCDBuffer[9]   & NBit16;
-  LCDBuffer[9]  = MaskStar & SBit2 != 0x00  ? LCDBuffer[9]  | Bit15  :  LCDBuffer[9]   & NBit15;
-  LCDBuffer[9]  = MaskStar & SBit3 != 0x00  ? LCDBuffer[9]  | Bit14  :  LCDBuffer[9]   & NBit14;
-  LCDBuffer[9]  = MaskStar & SBit4 != 0x00  ? LCDBuffer[9]  | Bit13  :  LCDBuffer[9]   & NBit13;
-  LCDBuffer[11] = MaskStar & SBit5 != 0x00  ? LCDBuffer[11] | Bit6   :  LCDBuffer[11]  & NBit6;
-  LCDBuffer[11] = MaskStar & SBit6 != 0x00  ? LCDBuffer[11] | Bit5   :  LCDBuffer[11]  & NBit5;
-  LCDBuffer[11] = MaskStar & SBit7 != 0x00  ? LCDBuffer[11] | Bit4   :  LCDBuffer[11]  & NBit4;
-  LCDBuffer[11] = MaskStar & SBit8 != 0x00  ? LCDBuffer[11] | Bit3   :  LCDBuffer[11]  & NBit3;
+  LCDBuffer[9]  = (MaskStar & SBit1) != 0x00  ? LCDBuffer[9]  | Bit16  :  LCDBuffer[9]   & NBit16;
+  LCDBuffer[9]  = (MaskStar & SBit2) != 0x00  ? LCDBuffer[9]  | Bit15  :  LCDBuffer[9]   & NBit15;
+  LCDBuffer[9]  = (MaskStar & SBit3) != 0x00  ? LCDBuffer[9]  | Bit14  :  LCDBuffer[9]   & NBit14;
+  LCDBuffer[9]  = (MaskStar & SBit4) != 0x00  ? LCDBuffer[9]  | Bit13  :  LCDBuffer[9]   & NBit13;
+  LCDBuffer[11] = (MaskStar & SBit5) != 0x00  ? LCDBuffer[11] | Bit6   :  LCDBuffer[11]  & NBit6;
+  LCDBuffer[11] = (MaskStar & SBit6) != 0x00  ? LCDBuffer[11] | Bit5   :  LCDBuffer[11]  & NBit5;
+  LCDBuffer[11] = (MaskStar & SBit7) != 0x00  ? LCDBuffer[11] | Bit4   :  LCDBuffer[11]  & NBit4;
+  LCDBuffer[11] = (MaskStar & SBit8) != 0x00  ? LCDBuffer[11] | Bit3   :  LCDBuffer[11]  & NBit3;
 }
 
 // Clear all the 16 segments of the Box and Star using fixed negative masks
@@ -308,154 +308,154 @@ void ToggleNumberMask(byte Row, byte Pos, byte SegMask) {
 
 // Take a mask and set the upper first 7 segments digit, never used directly
 void ToggleNumberHi0(byte SegMask) {
-  LCDBuffer[9]  = SegMask & SBit1 != 0x00  ? LCDBuffer[9]  | Bit11  :  LCDBuffer[9]   & NBit11;
-  LCDBuffer[8]  = SegMask & SBit2 != 0x00  ? LCDBuffer[8]  | Bit10  :  LCDBuffer[8]   & NBit10;
-  LCDBuffer[8]  = SegMask & SBit3 != 0x00  ? LCDBuffer[8]  | Bit11  :  LCDBuffer[8]   & NBit11;
-  LCDBuffer[8]  = SegMask & SBit4 != 0x00  ? LCDBuffer[8]  | Bit8   :  LCDBuffer[8]   & NBit8;
-  LCDBuffer[9]  = SegMask & SBit5 != 0x00  ? LCDBuffer[9]  | Bit12  :  LCDBuffer[9]   & NBit12;
-  LCDBuffer[8]  = SegMask & SBit6 != 0x00  ? LCDBuffer[8]  | Bit9   :  LCDBuffer[8]   & NBit9;
-  LCDBuffer[9]  = SegMask & SBit7 != 0x00  ? LCDBuffer[9]  | Bit10  :  LCDBuffer[9]   & NBit10;
+  LCDBuffer[9]  = (SegMask & SBit1) != 0x00  ? LCDBuffer[9]  | Bit11  :  LCDBuffer[9]   & NBit11;
+  LCDBuffer[8]  = (SegMask & SBit2) != 0x00  ? LCDBuffer[8]  | Bit10  :  LCDBuffer[8]   & NBit10;
+  LCDBuffer[8]  = (SegMask & SBit3) != 0x00  ? LCDBuffer[8]  | Bit11  :  LCDBuffer[8]   & NBit11;
+  LCDBuffer[8]  = (SegMask & SBit4) != 0x00  ? LCDBuffer[8]  | Bit8   :  LCDBuffer[8]   & NBit8;
+  LCDBuffer[9]  = (SegMask & SBit5) != 0x00  ? LCDBuffer[9]  | Bit12  :  LCDBuffer[9]   & NBit12;
+  LCDBuffer[8]  = (SegMask & SBit6) != 0x00  ? LCDBuffer[8]  | Bit9   :  LCDBuffer[8]   & NBit9;
+  LCDBuffer[9]  = (SegMask & SBit7) != 0x00  ? LCDBuffer[9]  | Bit10  :  LCDBuffer[9]   & NBit10;
 }
 
 // Take a mask and set the upper second 7 segments digit, never used directly
 void ToggleNumberHi1(byte SegMask) {
-  LCDBuffer[8]  = SegMask & SBit1 != 0x00  ? LCDBuffer[8]  | Bit14  :  LCDBuffer[8]   & NBit14;
-  LCDBuffer[9]  = SegMask & SBit2 != 0x00  ? LCDBuffer[9]  | Bit6   :  LCDBuffer[9]   & NBit6;
-  LCDBuffer[9]  = SegMask & SBit3 != 0x00  ? LCDBuffer[9]  | Bit5   :  LCDBuffer[9]   & NBit5;
-  LCDBuffer[9]  = SegMask & SBit4 != 0x00  ? LCDBuffer[9]  | Bit8   :  LCDBuffer[9]   & NBit8;
-  LCDBuffer[8]  = SegMask & SBit5 != 0x00  ? LCDBuffer[8]  | Bit13  :  LCDBuffer[8]   & NBit13;
-  LCDBuffer[9]  = SegMask & SBit6 != 0x00  ? LCDBuffer[9]  | Bit7   :  LCDBuffer[9]   & NBit7;
-  LCDBuffer[8]  = SegMask & SBit7 != 0x00  ? LCDBuffer[8]  | Bit15  :  LCDBuffer[8]   & NBit15;
+  LCDBuffer[8]  = (SegMask & SBit1) != 0x00  ? LCDBuffer[8]  | Bit14  :  LCDBuffer[8]   & NBit14;
+  LCDBuffer[9]  = (SegMask & SBit2) != 0x00  ? LCDBuffer[9]  | Bit6   :  LCDBuffer[9]   & NBit6;
+  LCDBuffer[9]  = (SegMask & SBit3) != 0x00  ? LCDBuffer[9]  | Bit5   :  LCDBuffer[9]   & NBit5;
+  LCDBuffer[9]  = (SegMask & SBit4) != 0x00  ? LCDBuffer[9]  | Bit8   :  LCDBuffer[9]   & NBit8;
+  LCDBuffer[8]  = (SegMask & SBit5) != 0x00  ? LCDBuffer[8]  | Bit13  :  LCDBuffer[8]   & NBit13;
+  LCDBuffer[9]  = (SegMask & SBit6) != 0x00  ? LCDBuffer[9]  | Bit7   :  LCDBuffer[9]   & NBit7;
+  LCDBuffer[8]  = (SegMask & SBit7) != 0x00  ? LCDBuffer[8]  | Bit15  :  LCDBuffer[8]   & NBit15;
 }
 
 // Take a mask and set the upper third 7 segments digit, never used directly
 void ToggleNumberHi2(byte SegMask) {
-  LCDBuffer[9]  = SegMask & SBit1 != 0x00  ? LCDBuffer[9]  | Bit3   :  LCDBuffer[9]   & NBit3;
-  LCDBuffer[9]  = SegMask & SBit2 != 0x00  ? LCDBuffer[9]  | Bit2   :  LCDBuffer[9]   & NBit2;
-  LCDBuffer[7]  = SegMask & SBit3 != 0x00  ? LCDBuffer[7]  | Bit15  :  LCDBuffer[7]   & NBit15;
-  LCDBuffer[8]  = SegMask & SBit4 != 0x00  ? LCDBuffer[8]  | Bit16  :  LCDBuffer[8]   & NBit16;
-  LCDBuffer[9]  = SegMask & SBit5 != 0x00  ? LCDBuffer[9]  | Bit4   :  LCDBuffer[9]   & NBit4;
-  LCDBuffer[9]  = SegMask & SBit6 != 0x00  ? LCDBuffer[9]  | Bit1   :  LCDBuffer[9]   & NBit1;
-  LCDBuffer[7]  = SegMask & SBit7 != 0x00  ? LCDBuffer[7]  | Bit16  :  LCDBuffer[7]   & NBit16;
+  LCDBuffer[9]  = (SegMask & SBit1) != 0x00  ? LCDBuffer[9]  | Bit3   :  LCDBuffer[9]   & NBit3;
+  LCDBuffer[9]  = (SegMask & SBit2) != 0x00  ? LCDBuffer[9]  | Bit2   :  LCDBuffer[9]   & NBit2;
+  LCDBuffer[7]  = (SegMask & SBit3) != 0x00  ? LCDBuffer[7]  | Bit15  :  LCDBuffer[7]   & NBit15;
+  LCDBuffer[8]  = (SegMask & SBit4) != 0x00  ? LCDBuffer[8]  | Bit16  :  LCDBuffer[8]   & NBit16;
+  LCDBuffer[9]  = (SegMask & SBit5) != 0x00  ? LCDBuffer[9]  | Bit4   :  LCDBuffer[9]   & NBit4;
+  LCDBuffer[9]  = (SegMask & SBit6) != 0x00  ? LCDBuffer[9]  | Bit1   :  LCDBuffer[9]   & NBit1;
+  LCDBuffer[7]  = (SegMask & SBit7) != 0x00  ? LCDBuffer[7]  | Bit16  :  LCDBuffer[7]   & NBit16;
 }
 
 // Take a mask and set the upper forth 7 segments digit, never used directly
 void ToggleNumberHi3(byte SegMask) {
-  LCDBuffer[7]  = SegMask & SBit1 != 0x00  ? LCDBuffer[7]  | Bit11  :  LCDBuffer[7]   & NBit11;
-  LCDBuffer[6]  = SegMask & SBit2 != 0x00  ? LCDBuffer[6]  | Bit1   :  LCDBuffer[6]   & NBit1;
-  LCDBuffer[6]  = SegMask & SBit3 != 0x00  ? LCDBuffer[6]  | Bit2   :  LCDBuffer[6]   & NBit2;
-  LCDBuffer[7]  = SegMask & SBit4 != 0x00  ? LCDBuffer[7]  | Bit14  :  LCDBuffer[7]   & NBit14;
-  LCDBuffer[7]  = SegMask & SBit5 != 0x00  ? LCDBuffer[7]  | Bit12  :  LCDBuffer[7]   & NBit12;
-  LCDBuffer[7]  = SegMask & SBit6 != 0x00  ? LCDBuffer[7]  | Bit13  :  LCDBuffer[7]   & NBit13;
-  LCDBuffer[7]  = SegMask & SBit7 != 0x00  ? LCDBuffer[7]  | Bit10  :  LCDBuffer[7]   & NBit10;
+  LCDBuffer[7]  = (SegMask & SBit1) != 0x00  ? LCDBuffer[7]  | Bit11  :  LCDBuffer[7]   & NBit11;
+  LCDBuffer[6]  = (SegMask & SBit2) != 0x00  ? LCDBuffer[6]  | Bit1   :  LCDBuffer[6]   & NBit1;
+  LCDBuffer[6]  = (SegMask & SBit3) != 0x00  ? LCDBuffer[6]  | Bit2   :  LCDBuffer[6]   & NBit2;
+  LCDBuffer[7]  = (SegMask & SBit4) != 0x00  ? LCDBuffer[7]  | Bit14  :  LCDBuffer[7]   & NBit14;
+  LCDBuffer[7]  = (SegMask & SBit5) != 0x00  ? LCDBuffer[7]  | Bit12  :  LCDBuffer[7]   & NBit12;
+  LCDBuffer[7]  = (SegMask & SBit6) != 0x00  ? LCDBuffer[7]  | Bit13  :  LCDBuffer[7]   & NBit13;
+  LCDBuffer[7]  = (SegMask & SBit7) != 0x00  ? LCDBuffer[7]  | Bit10  :  LCDBuffer[7]   & NBit10;
 }
 
 // Take a mask and set the upper fifth 7 segments digit, never used directly
 void ToggleNumberHi4(byte SegMask) {
-  LCDBuffer[6]  = SegMask & SBit1 != 0x00  ? LCDBuffer[6]  | Bit5   :  LCDBuffer[6]   & NBit5;
-  LCDBuffer[7]  = SegMask & SBit2 != 0x00  ? LCDBuffer[7]  | Bit6   :  LCDBuffer[7]   & NBit6;
-  LCDBuffer[7]  = SegMask & SBit3 != 0x00  ? LCDBuffer[7]  | Bit5   :  LCDBuffer[7]   & NBit5;
-  LCDBuffer[7]  = SegMask & SBit4 != 0x00  ? LCDBuffer[7]  | Bit8   :  LCDBuffer[7]   & NBit8;
-  LCDBuffer[6]  = SegMask & SBit5 != 0x00  ? LCDBuffer[6]  | Bit4   :  LCDBuffer[6]   & NBit4;
-  LCDBuffer[7]  = SegMask & SBit6 != 0x00  ? LCDBuffer[7]  | Bit7   :  LCDBuffer[7]   & NBit7;
-  LCDBuffer[6]  = SegMask & SBit7 != 0x00  ? LCDBuffer[6]  | Bit6   :  LCDBuffer[6]   & NBit6;
+  LCDBuffer[6]  = (SegMask & SBit1) != 0x00  ? LCDBuffer[6]  | Bit5   :  LCDBuffer[6]   & NBit5;
+  LCDBuffer[7]  = (SegMask & SBit2) != 0x00  ? LCDBuffer[7]  | Bit6   :  LCDBuffer[7]   & NBit6;
+  LCDBuffer[7]  = (SegMask & SBit3) != 0x00  ? LCDBuffer[7]  | Bit5   :  LCDBuffer[7]   & NBit5;
+  LCDBuffer[7]  = (SegMask & SBit4) != 0x00  ? LCDBuffer[7]  | Bit8   :  LCDBuffer[7]   & NBit8;
+  LCDBuffer[6]  = (SegMask & SBit5) != 0x00  ? LCDBuffer[6]  | Bit4   :  LCDBuffer[6]   & NBit4;
+  LCDBuffer[7]  = (SegMask & SBit6) != 0x00  ? LCDBuffer[7]  | Bit7   :  LCDBuffer[7]   & NBit7;
+  LCDBuffer[6]  = (SegMask & SBit7) != 0x00  ? LCDBuffer[6]  | Bit6   :  LCDBuffer[6]   & NBit6;
 }
 
 // Take a mask and set the upper sixth 7 segments digit, never used directly
 void ToggleNumberHi5(byte SegMask) {
-  LCDBuffer[7]  = SegMask & SBit1 != 0x00  ? LCDBuffer[7]  | Bit3   :  LCDBuffer[7]   & NBit3;
-  LCDBuffer[6]  = SegMask & SBit2 != 0x00  ? LCDBuffer[6]  | Bit9   :  LCDBuffer[6]   & NBit9;
-  LCDBuffer[6]  = SegMask & SBit3 != 0x00  ? LCDBuffer[6]  | Bit10  :  LCDBuffer[6]   & NBit10;
-  LCDBuffer[6]  = SegMask & SBit4 != 0x00  ? LCDBuffer[6]  | Bit7   :  LCDBuffer[6]   & NBit7;
-  LCDBuffer[7]  = SegMask & SBit5 != 0x00  ? LCDBuffer[7]  | Bit4   :  LCDBuffer[7]   & NBit4;
-  LCDBuffer[6]  = SegMask & SBit6 != 0x00  ? LCDBuffer[6]  | Bit8   :  LCDBuffer[6]   & NBit8;
-  LCDBuffer[7]  = SegMask & SBit7 != 0x00  ? LCDBuffer[7]  | Bit2   :  LCDBuffer[7]   & NBit2;
+  LCDBuffer[7]  = (SegMask & SBit1) != 0x00  ? LCDBuffer[7]  | Bit3   :  LCDBuffer[7]   & NBit3;
+  LCDBuffer[6]  = (SegMask & SBit2) != 0x00  ? LCDBuffer[6]  | Bit9   :  LCDBuffer[6]   & NBit9;
+  LCDBuffer[6]  = (SegMask & SBit3) != 0x00  ? LCDBuffer[6]  | Bit10  :  LCDBuffer[6]   & NBit10;
+  LCDBuffer[6]  = (SegMask & SBit4) != 0x00  ? LCDBuffer[6]  | Bit7   :  LCDBuffer[6]   & NBit7;
+  LCDBuffer[7]  = (SegMask & SBit5) != 0x00  ? LCDBuffer[7]  | Bit4   :  LCDBuffer[7]   & NBit4;
+  LCDBuffer[6]  = (SegMask & SBit6) != 0x00  ? LCDBuffer[6]  | Bit8   :  LCDBuffer[6]   & NBit8;
+  LCDBuffer[7]  = (SegMask & SBit7) != 0x00  ? LCDBuffer[7]  | Bit2   :  LCDBuffer[7]   & NBit2;
 }
 
 // Take a mask and set the upper last 7 segments digit, never used directly
 void ToggleNumberHi6(byte SegMask) {
-  LCDBuffer[6]  = SegMask & SBit1 != 0x00  ? LCDBuffer[6]  | Bit12   :  LCDBuffer[6]   & NBit12;
-  LCDBuffer[6]  = SegMask & SBit2 != 0x00  ? LCDBuffer[6]  | Bit15   :  LCDBuffer[6]   & NBit15;
-  LCDBuffer[6]  = SegMask & SBit3 != 0x00  ? LCDBuffer[6]  | Bit14   :  LCDBuffer[6]   & NBit14;
-  LCDBuffer[7]  = SegMask & SBit4 != 0x00  ? LCDBuffer[7]  | Bit1    :  LCDBuffer[7]   & NBit1;
-  LCDBuffer[6]  = SegMask & SBit5 != 0x00  ? LCDBuffer[6]  | Bit11   :  LCDBuffer[6]   & NBit11;
-  LCDBuffer[6]  = SegMask & SBit6 != 0x00  ? LCDBuffer[6]  | Bit16   :  LCDBuffer[6]   & NBit16;
-  LCDBuffer[6]  = SegMask & SBit7 != 0x00  ? LCDBuffer[6]  | Bit13   :  LCDBuffer[6]   & NBit13;
+  LCDBuffer[6]  = (SegMask & SBit1) != 0x00  ? LCDBuffer[6]  | Bit12   :  LCDBuffer[6]   & NBit12;
+  LCDBuffer[6]  = (SegMask & SBit2) != 0x00  ? LCDBuffer[6]  | Bit15   :  LCDBuffer[6]   & NBit15;
+  LCDBuffer[6]  = (SegMask & SBit3) != 0x00  ? LCDBuffer[6]  | Bit14   :  LCDBuffer[6]   & NBit14;
+  LCDBuffer[7]  = (SegMask & SBit4) != 0x00  ? LCDBuffer[7]  | Bit1    :  LCDBuffer[7]   & NBit1;
+  LCDBuffer[6]  = (SegMask & SBit5) != 0x00  ? LCDBuffer[6]  | Bit11   :  LCDBuffer[6]   & NBit11;
+  LCDBuffer[6]  = (SegMask & SBit6) != 0x00  ? LCDBuffer[6]  | Bit16   :  LCDBuffer[6]   & NBit16;
+  LCDBuffer[6]  = (SegMask & SBit7) != 0x00  ? LCDBuffer[6]  | Bit13   :  LCDBuffer[6]   & NBit13;
 }
 
 // Take a mask and set the lower first 7 segments digit, never used directly
 void ToggleNumberLow0(byte SegMask) {
-  LCDBuffer[2]  = SegMask & SBit1 != 0x00  ? LCDBuffer[2]  | Bit16  :  LCDBuffer[2]   & NBit16;
-  LCDBuffer[3]  = SegMask & SBit2 != 0x00  ? LCDBuffer[3]  | Bit5   :  LCDBuffer[3]   & NBit5;
-  LCDBuffer[3]  = SegMask & SBit3 != 0x00  ? LCDBuffer[3]  | Bit4   :  LCDBuffer[3]   & NBit4;
-  LCDBuffer[2]  = SegMask & SBit4 != 0x00  ? LCDBuffer[2]  | Bit9   :  LCDBuffer[2]   & NBit9;
-  LCDBuffer[3]  = SegMask & SBit5 != 0x00  ? LCDBuffer[3]  | Bit3   :  LCDBuffer[3]   & NBit3;
-  LCDBuffer[2]  = SegMask & SBit6 != 0x00  ? LCDBuffer[2]  | Bit10  :  LCDBuffer[2]   & NBit10;
-  LCDBuffer[2]  = SegMask & SBit7 != 0x00  ? LCDBuffer[2]  | Bit8   :  LCDBuffer[2]   & NBit8;
+  LCDBuffer[2]  = (SegMask & SBit1) != 0x00  ? LCDBuffer[2]  | Bit16  :  LCDBuffer[2]   & NBit16;
+  LCDBuffer[3]  = (SegMask & SBit2) != 0x00  ? LCDBuffer[3]  | Bit5   :  LCDBuffer[3]   & NBit5;
+  LCDBuffer[3]  = (SegMask & SBit3) != 0x00  ? LCDBuffer[3]  | Bit4   :  LCDBuffer[3]   & NBit4;
+  LCDBuffer[2]  = (SegMask & SBit4) != 0x00  ? LCDBuffer[2]  | Bit9   :  LCDBuffer[2]   & NBit9;
+  LCDBuffer[3]  = (SegMask & SBit5) != 0x00  ? LCDBuffer[3]  | Bit3   :  LCDBuffer[3]   & NBit3;
+  LCDBuffer[2]  = (SegMask & SBit6) != 0x00  ? LCDBuffer[2]  | Bit10  :  LCDBuffer[2]   & NBit10;
+  LCDBuffer[2]  = (SegMask & SBit7) != 0x00  ? LCDBuffer[2]  | Bit8   :  LCDBuffer[2]   & NBit8;
 }
 
 // Take a mask and set the lower second 7 segments digit, never used directly
 void ToggleNumberLow1(byte SegMask) {
-  LCDBuffer[2]  = SegMask & SBit1 != 0x00  ? LCDBuffer[2]  | Bit7   :  LCDBuffer[2]   & NBit7;
-  LCDBuffer[2]  = SegMask & SBit2 != 0x00  ? LCDBuffer[2]  | Bit4   :  LCDBuffer[2]   & NBit4;
-  LCDBuffer[2]  = SegMask & SBit3 != 0x00  ? LCDBuffer[2]  | Bit5   :  LCDBuffer[2]   & NBit5;
-  LCDBuffer[3]  = SegMask & SBit4 != 0x00  ? LCDBuffer[3]  | Bit7   :  LCDBuffer[3]   & NBit7;
-  LCDBuffer[2]  = SegMask & SBit5 != 0x00  ? LCDBuffer[2]  | Bit6   :  LCDBuffer[2]   & NBit6;
-  LCDBuffer[3]  = SegMask & SBit6 != 0x00  ? LCDBuffer[3]  | Bit6   :  LCDBuffer[3]   & NBit6;
-  LCDBuffer[3]  = SegMask & SBit7 != 0x00  ? LCDBuffer[3]  | Bit8   :  LCDBuffer[3]   & NBit8;
+  LCDBuffer[2]  = (SegMask & SBit1) != 0x00  ? LCDBuffer[2]  | Bit7   :  LCDBuffer[2]   & NBit7;
+  LCDBuffer[2]  = (SegMask & SBit2) != 0x00  ? LCDBuffer[2]  | Bit4   :  LCDBuffer[2]   & NBit4;
+  LCDBuffer[2]  = (SegMask & SBit3) != 0x00  ? LCDBuffer[2]  | Bit5   :  LCDBuffer[2]   & NBit5;
+  LCDBuffer[3]  = (SegMask & SBit4) != 0x00  ? LCDBuffer[3]  | Bit7   :  LCDBuffer[3]   & NBit7;
+  LCDBuffer[2]  = (SegMask & SBit5) != 0x00  ? LCDBuffer[2]  | Bit6   :  LCDBuffer[2]   & NBit6;
+  LCDBuffer[3]  = (SegMask & SBit6) != 0x00  ? LCDBuffer[3]  | Bit6   :  LCDBuffer[3]   & NBit6;
+  LCDBuffer[3]  = (SegMask & SBit7) != 0x00  ? LCDBuffer[3]  | Bit8   :  LCDBuffer[3]   & NBit8;
 }
 
 // Take a mask and set the lower third 7 segments digit, never used directly
 void ToggleNumberLow2(byte SegMask) {
-  LCDBuffer[3]  = SegMask & SBit1 != 0x00  ? LCDBuffer[3]  | Bit9   :  LCDBuffer[3]   & NBit9;
-  LCDBuffer[3]  = SegMask & SBit2 != 0x00  ? LCDBuffer[3]  | Bit12  :  LCDBuffer[3]   & NBit12;
-  LCDBuffer[3]  = SegMask & SBit3 != 0x00  ? LCDBuffer[3]  | Bit11  :  LCDBuffer[3]   & NBit11;
-  LCDBuffer[2]  = SegMask & SBit4 != 0x00  ? LCDBuffer[2]  | Bit2   :  LCDBuffer[2]   & NBit2;
-  LCDBuffer[3]  = SegMask & SBit5 != 0x00  ? LCDBuffer[3]  | Bit10  :  LCDBuffer[3]   & NBit10;
-  LCDBuffer[2]  = SegMask & SBit6 != 0x00  ? LCDBuffer[2]  | Bit3   :  LCDBuffer[2]   & NBit3;
-  LCDBuffer[2]  = SegMask & SBit7 != 0x00  ? LCDBuffer[2]  | Bit1   :  LCDBuffer[2]   & NBit1;
+  LCDBuffer[3]  = (SegMask & SBit1) != 0x00  ? LCDBuffer[3]  | Bit9   :  LCDBuffer[3]   & NBit9;
+  LCDBuffer[3]  = (SegMask & SBit2) != 0x00  ? LCDBuffer[3]  | Bit12  :  LCDBuffer[3]   & NBit12;
+  LCDBuffer[3]  = (SegMask & SBit3) != 0x00  ? LCDBuffer[3]  | Bit11  :  LCDBuffer[3]   & NBit11;
+  LCDBuffer[2]  = (SegMask & SBit4) != 0x00  ? LCDBuffer[2]  | Bit2   :  LCDBuffer[2]   & NBit2;
+  LCDBuffer[3]  = (SegMask & SBit5) != 0x00  ? LCDBuffer[3]  | Bit10  :  LCDBuffer[3]   & NBit10;
+  LCDBuffer[2]  = (SegMask & SBit6) != 0x00  ? LCDBuffer[2]  | Bit3   :  LCDBuffer[2]   & NBit3;
+  LCDBuffer[2]  = (SegMask & SBit7) != 0x00  ? LCDBuffer[2]  | Bit1   :  LCDBuffer[2]   & NBit1;
 }
 
 // Take a mask and set the lower forth 7 segments digit, never used directly
 void ToggleNumberLow3(byte SegMask) {
-  LCDBuffer[3]  = SegMask & SBit1 != 0x00  ? LCDBuffer[3]  | Bit13  :  LCDBuffer[3]   & NBit13;
-  LCDBuffer[5]  = SegMask & SBit2 != 0x00  ? LCDBuffer[5]  | Bit4   :  LCDBuffer[5]   & NBit4;
-  LCDBuffer[5]  = SegMask & SBit3 != 0x00  ? LCDBuffer[5]  | Bit3   :  LCDBuffer[5]   & NBit3;
-  LCDBuffer[3]  = SegMask & SBit4 != 0x00  ? LCDBuffer[3]  | Bit16  :  LCDBuffer[3]   & NBit16;
-  LCDBuffer[3]  = SegMask & SBit5 != 0x00  ? LCDBuffer[3]  | Bit15  :  LCDBuffer[3]   & NBit15;
-  LCDBuffer[3]  = SegMask & SBit6 != 0x00  ? LCDBuffer[3]  | Bit14  :  LCDBuffer[3]   & NBit14;
-  LCDBuffer[5]  = SegMask & SBit7 != 0x00  ? LCDBuffer[5]  | Bit2   :  LCDBuffer[5]   & NBit2;
+  LCDBuffer[3]  = (SegMask & SBit1) != 0x00  ? LCDBuffer[3]  | Bit13  :  LCDBuffer[3]   & NBit13;
+  LCDBuffer[5]  = (SegMask & SBit2) != 0x00  ? LCDBuffer[5]  | Bit4   :  LCDBuffer[5]   & NBit4;
+  LCDBuffer[5]  = (SegMask & SBit3) != 0x00  ? LCDBuffer[5]  | Bit3   :  LCDBuffer[5]   & NBit3;
+  LCDBuffer[3]  = (SegMask & SBit4) != 0x00  ? LCDBuffer[3]  | Bit16  :  LCDBuffer[3]   & NBit16;
+  LCDBuffer[3]  = (SegMask & SBit5) != 0x00  ? LCDBuffer[3]  | Bit15  :  LCDBuffer[3]   & NBit15;
+  LCDBuffer[3]  = (SegMask & SBit6) != 0x00  ? LCDBuffer[3]  | Bit14  :  LCDBuffer[3]   & NBit14;
+  LCDBuffer[5]  = (SegMask & SBit7) != 0x00  ? LCDBuffer[5]  | Bit2   :  LCDBuffer[5]   & NBit2;
 }
 
 // Take a mask and set the lower fifth 7 segments digit, never used directly
 void ToggleNumberLow4(byte SegMask) {
-  LCDBuffer[5]  = SegMask & SBit1 != 0x00  ? LCDBuffer[5]  | Bit6   :  LCDBuffer[5]   & NBit6;
-  LCDBuffer[5]  = SegMask & SBit2 != 0x00  ? LCDBuffer[5]  | Bit9   :  LCDBuffer[5]   & NBit9;
-  LCDBuffer[5]  = SegMask & SBit3 != 0x00  ? LCDBuffer[5]  | Bit8   :  LCDBuffer[5]   & NBit8;
-  LCDBuffer[4]  = SegMask & SBit4 != 0x00  ? LCDBuffer[4]  | Bit14  :  LCDBuffer[4]   & NBit14;
-  LCDBuffer[5]  = SegMask & SBit5 != 0x00  ? LCDBuffer[5]  | Bit7   :  LCDBuffer[5]   & NBit7;
-  LCDBuffer[4]  = SegMask & SBit6 != 0x00  ? LCDBuffer[4]  | Bit15  :  LCDBuffer[4]   & NBit15;
-  LCDBuffer[4]  = SegMask & SBit7 != 0x00  ? LCDBuffer[4]  | Bit13  :  LCDBuffer[4]   & NBit13;
+  LCDBuffer[5]  = (SegMask & SBit1) != 0x00  ? LCDBuffer[5]  | Bit6   :  LCDBuffer[5]   & NBit6;
+  LCDBuffer[5]  = (SegMask & SBit2) != 0x00  ? LCDBuffer[5]  | Bit9   :  LCDBuffer[5]   & NBit9;
+  LCDBuffer[5]  = (SegMask & SBit3) != 0x00  ? LCDBuffer[5]  | Bit8   :  LCDBuffer[5]   & NBit8;
+  LCDBuffer[4]  = (SegMask & SBit4) != 0x00  ? LCDBuffer[4]  | Bit14  :  LCDBuffer[4]   & NBit14;
+  LCDBuffer[5]  = (SegMask & SBit5) != 0x00  ? LCDBuffer[5]  | Bit7   :  LCDBuffer[5]   & NBit7;
+  LCDBuffer[4]  = (SegMask & SBit6) != 0x00  ? LCDBuffer[4]  | Bit15  :  LCDBuffer[4]   & NBit15;
+  LCDBuffer[4]  = (SegMask & SBit7) != 0x00  ? LCDBuffer[4]  | Bit13  :  LCDBuffer[4]   & NBit13;
 }
 
 // Take a mask and set the lower sixth 7 segments digit, never used directly
 void ToggleNumberLow5(byte SegMask) {
-  LCDBuffer[5]  = SegMask & SBit1 != 0x00  ? LCDBuffer[5]  | Bit10  :  LCDBuffer[5]   & NBit10;
-  LCDBuffer[5]  = SegMask & SBit2 != 0x00  ? LCDBuffer[5]  | Bit13  :  LCDBuffer[5]   & NBit13;
-  LCDBuffer[5]  = SegMask & SBit3 != 0x00  ? LCDBuffer[5]  | Bit12  :  LCDBuffer[5]   & NBit12;
-  LCDBuffer[4]  = SegMask & SBit4 != 0x00  ? LCDBuffer[4]  | Bit10  :  LCDBuffer[4]   & NBit10;
-  LCDBuffer[5]  = SegMask & SBit5 != 0x00  ? LCDBuffer[5]  | Bit11  :  LCDBuffer[5]   & NBit11;
-  LCDBuffer[4]  = SegMask & SBit6 != 0x00  ? LCDBuffer[4]  | Bit11  :  LCDBuffer[4]   & NBit11;
-  LCDBuffer[4]  = SegMask & SBit7 != 0x00  ? LCDBuffer[4]  | Bit9   :  LCDBuffer[4]   & NBit9;
+  LCDBuffer[5]  = (SegMask & SBit1) != 0x00  ? LCDBuffer[5]  | Bit10  :  LCDBuffer[5]   & NBit10;
+  LCDBuffer[5]  = (SegMask & SBit2) != 0x00  ? LCDBuffer[5]  | Bit13  :  LCDBuffer[5]   & NBit13;
+  LCDBuffer[5]  = (SegMask & SBit3) != 0x00  ? LCDBuffer[5]  | Bit12  :  LCDBuffer[5]   & NBit12;
+  LCDBuffer[4]  = (SegMask & SBit4) != 0x00  ? LCDBuffer[4]  | Bit10  :  LCDBuffer[4]   & NBit10;
+  LCDBuffer[5]  = (SegMask & SBit5) != 0x00  ? LCDBuffer[5]  | Bit11  :  LCDBuffer[5]   & NBit11;
+  LCDBuffer[4]  = (SegMask & SBit6) != 0x00  ? LCDBuffer[4]  | Bit11  :  LCDBuffer[4]   & NBit11;
+  LCDBuffer[4]  = (SegMask & SBit7) != 0x00  ? LCDBuffer[4]  | Bit9   :  LCDBuffer[4]   & NBit9;
 }
 
 // Take a mask and set the lower last 7 segments digit, never used directly
 void ToggleNumberLow6(byte SegMask) {
-  LCDBuffer[4]  = SegMask & SBit1 != 0x00  ? LCDBuffer[4]  | Bit8   :  LCDBuffer[4]   & NBit8;
-  LCDBuffer[4]  = SegMask & SBit2 != 0x00  ? LCDBuffer[4]  | Bit5   :  LCDBuffer[4]   & NBit5;
-  LCDBuffer[4]  = SegMask & SBit3 != 0x00  ? LCDBuffer[4]  | Bit6   :  LCDBuffer[4]   & NBit6;
-  LCDBuffer[5]  = SegMask & SBit4 != 0x00  ? LCDBuffer[5]  | Bit15  :  LCDBuffer[5]   & NBit15;
-  LCDBuffer[4]  = SegMask & SBit5 != 0x00  ? LCDBuffer[4]  | Bit7   :  LCDBuffer[4]   & NBit7;
-  LCDBuffer[5]  = SegMask & SBit6 != 0x00  ? LCDBuffer[5]  | Bit14  :  LCDBuffer[5]   & NBit14;
-  LCDBuffer[5]  = SegMask & SBit7 != 0x00  ? LCDBuffer[5]  | Bit16  :  LCDBuffer[5]   & NBit16;
+  LCDBuffer[4]  = (SegMask & SBit1) != 0x00  ? LCDBuffer[4]  | Bit8   :  LCDBuffer[4]   & NBit8;
+  LCDBuffer[4]  = (SegMask & SBit2) != 0x00  ? LCDBuffer[4]  | Bit5   :  LCDBuffer[4]   & NBit5;
+  LCDBuffer[4]  = (SegMask & SBit3) != 0x00  ? LCDBuffer[4]  | Bit6   :  LCDBuffer[4]   & NBit6;
+  LCDBuffer[5]  = (SegMask & SBit4) != 0x00  ? LCDBuffer[5]  | Bit15  :  LCDBuffer[5]   & NBit15;
+  LCDBuffer[4]  = (SegMask & SBit5) != 0x00  ? LCDBuffer[4]  | Bit7   :  LCDBuffer[4]   & NBit7;
+  LCDBuffer[5]  = (SegMask & SBit6) != 0x00  ? LCDBuffer[5]  | Bit14  :  LCDBuffer[5]   & NBit14;
+  LCDBuffer[5]  = (SegMask & SBit7) != 0x00  ? LCDBuffer[5]  | Bit16  :  LCDBuffer[5]   & NBit16;
 }
