@@ -717,7 +717,7 @@ bool UpdateList() {
         for (byte i=0; i<LIST_MAX; i++) {
           // Find an empty slot or don't add key to list
           if (KeysPressed[i].Val == NO_KEY) {
-            KeysPressed[i].Val   = KeypadLayout[KeyCode];
+            KeysPressed[i].Val   = ((char*)KeypadLayout)[KeyCode];
             KeysPressed[i].Code  = KeyCode;
             KeysPressed[i].State = IDLE;   // Keys NOT on the list have an initial state of IDLE
             NextKeyState (i, IsPressed);

@@ -4,6 +4,7 @@
 //Global variables use 1317 bytes (64%) of dynamic memory, leaving 731 bytes for local variables. Maximum is 2048 bytes.
 
 //ToDo/Ideas
+//const
 //Handle when outside of the map
 //parse GPVTG messages ??? (maybe to heavy on processing, no real value in the additional data)
 //Alter Date based on Hour/Minute offset ??? (maybe to heavy on code, those 30Kb are precious)
@@ -29,7 +30,7 @@ constexpr byte LoadPin    = 13; // Pulled high then low when done sending data t
 constexpr byte DataPin    = 3;  // Sends the current bit value for the LCD
 constexpr byte ClockPin   = 2;  // Register the bit value on the falling edge
 constexpr byte LCDBackPin = A0; // Alternatively pulled briefly high then back low to be later briefly low then back high,
-                           //   keeps the LCD backplane more or less correctly energized, should be improved but it's good enough
+                                //   keeps the LCD backplane more or less correctly energized, should be improved but it's good enough
  
 //LEDs control pins
 constexpr byte LedPin       = A1; // Controls the red LED next to the LCD
